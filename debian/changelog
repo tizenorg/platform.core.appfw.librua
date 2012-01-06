@@ -1,0 +1,7 @@
+librua (0.1.0-26) unstable; urgency=low
+
+  * Initial Release.
+  * Git: pkgs/l/librua
+  * Tag: librua_0.1.0-26
+
+ -- Jinwoo Nam <jwoo.nam@samsung.com>  Wed, 07 Dec 2011 12:56:46 +0900
