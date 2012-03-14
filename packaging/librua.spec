@@ -1,12 +1,12 @@
 
 Name:       librua
 Summary:    Recently used application
-Version:    0.1.0
+Version:	0.1.0
 Release:    1
 Group:      TO BE/FILLED IN
 License:    TO BE FILLED IN
 Source0:    librua-%{version}.tar.gz
-Requires(post): /sbin/ldconfig
+Requires(post): /sbin/ldconfig, /bin/chown, /bin/mkdir
 Requires(post): /usr/bin/sqlite3
 Requires(postun): /sbin/ldconfig
 BuildRequires:  cmake
@@ -34,12 +34,9 @@ Recently used application library (devel)
 
 %build
 cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix}
-
-
 make %{?jobs:-j%jobs}
 
 %install
-rm -rf %{buildroot}
 %make_install
 
 %post
@@ -57,14 +54,12 @@ chmod 660 /opt/dbspace/.rua.db-journal
 
 
 %files
-%defattr(-,root,root,-)
 %config(missingok) /opt/share/rua_db.sql
 /usr/lib/librua.so.*
 
 
 
 %files devel
-%defattr(-,root,root,-)
 /usr/include/rua/*.h
 /usr/lib/librua.so
 /usr/lib/pkgconfig/rua.pc
