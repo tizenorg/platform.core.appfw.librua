@@ -1,7 +1,7 @@
 /*
  *  RUA
  *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2000 - 2012 Samsung Electronics Co., Ltd. All rights reserved.
  *
  * Contact: Jayoun Lee <airjany@samsung.com>
  *
@@ -19,6 +19,14 @@
  *
  */
 
+/**
+ * @file 	rua.h
+ * @brief       RUA API declaration header file.
+ * @author      Jinwoo Nam (jwoo.nam@samsung.com)
+ * @version     0.1
+ * @history     0.1: RUA API Declarations, structure declaration
+ */
+
 #ifndef __RUA_H__
 #define __RUA_H__
 
@@ -33,83 +41,123 @@
 extern "C" {
 #endif
 
+/**
+ * @defgroup RUA rua
+ * @{
+ */
+
+/**
+ * @}
+ */
+
+/**
+ * @addtogroup RUA
+ * @{
+ */
+
+/**
+ * @struct rua_rec
+ * @brief RUA record info structure
+ */
 struct rua_rec {
-	int id;
-	char *pkg_name;
-	char *app_path;
-	char *arg;
-	time_t launch_time;
+	int id;		/**<  primary key */
+	char *pkg_name;		/**< package name */
+	char *app_path;		/**< application path */
+	char *arg;		/**< application launching argument */
+	time_t launch_time;		/**< application launching time */
 };
 
-/* API */
 /**
- * Clear history 
- * return This method returns 0 (SUCCESS) or -1 (FAIL)
+ * @brief	Clear history
+ * @return 	0 on success, otherwise a nagative error value
+ * @retval	0 on successful
+ * @retval	-1 on failed
  */
 API int rua_clear_history(void);
 
-/* API */
 /**
- * Delete history with pkg_name 
- * return This method returns 0 (SUCCESS) or -1 (FAIL)
+ * @brief	Delete history with pkg_name
+ * @param[in]	pkg_name package name to delete history
+ * @return	0 on success, otherwise a nagative error value
+ * @retval	0 on successful
+ * @retval	-1 on failed
  */
 API int rua_delete_history_with_pkgname(char *pkg_name);
 
-/* API */
 /**
- * Delete history with app_path
- * return This method returns 0 (SUCCESS) or -1 (FAIL)
+ * @brief	Delete history with app_path
+ * @param[in]	app_path package name to delete history
+ * @return	0 on success, otherwise a nagative error value
+ * @retval	0 on successful
+ * @retval	-1 on failed
  */
 API int rua_delete_history_with_apppath(char *app_path);
 
-/* API */
 /**
- * Delete history with app_path (Will be deprecated!)
- * return This method returns 0 (SUCCESS) or -1 (FAIL)
- */
-API int rua_delete_history(char *app_path);
-
-/* API */
-/**
- * Add application to recently used application list
- * return This method returns 0 (SUCCESS) or -1 (FAIL)
+ * @brief	Add application to recently used application list
+ * @param[in]	rec  record to add history
+ * @return	0 on success, otherwise a nagative error value
+ * @retval	0 on successful
+ * @retval	-1 on failed
  */
 API int rua_add_history(struct rua_rec *rec);
 
 /**
- * Load recently used application history db.
- * return This method returns 0 (SUCCESS) or -1 (FAIL)
+ * @brief	Load recently used application history db.
+ * @param[out]	table db table pointer
+ * @param[out]	nrows the number of record
+ * @param[out]	ncols the number of field
+ * @return	0 on success, otherwise a nagative error value
+ * @retval	0 on successful
+ * @retval	-1 on failed
  */
 API int rua_history_load_db(char ***table, int *nrows, int *ncols);
 
 /**
- * Unload recently used application history db.
- * return This method returns 0 (SUCCESS) or -1 (FAIL)
+ * @brief	Unload recently used application history db.
+ * @param[in]	table db table pointer to unload
+ * @return	0 on success, otherwise a nagative error value
+ * @retval	0 on successful
+ * @retval	-1 on failed
  */
 API int rua_history_unload_db(char ***table);
 
 /**
- * Load recently used application record.
- * return This method returns 0 (SUCCESS) or -1 (FAIL)
+ * @brief	Load recently used application record.
+ * @param[out]	rec record to load
+ * @param[in]	table db table pointer
+ * @param[in]	nrows the number of record
+ * @param[in]	ncols the number of field
+ * @param[in]	row record index to load
+ * @return	0 on success, otherwise a nagative error value
+ * @retval	0 on successful
+ * @retval	-1 on failed
  */
 API int rua_history_get_rec(struct rua_rec *rec, char **table,
 				int nrows, int ncols, int row);
 
 /**
- * Check some package is latest or not with package name
- * return This method returns 0 (true) or -1 (false)
+ * @brief	Check some package is latest or not with package name
+ * @param[in]	pkg_name package name
+ * @return	0 on success, otherwise a nagative error value
+ * @retval	0 if given pkg_name is lastest application
+ * @retval	-1 if not lastest applicaton or on failed
  */
 API int rua_is_latest_app(const char *pkg_name);
 
 /**
- * initialize rua 
- * return This method returns 0 (SUCCESS) or -1 (FAIL)
+ * @brief	Initialize rua
+ * @return	0 on success, otherwise a nagative error value
+ * @retval	0 on successful
+ * @retval	-1 on failed
  */
 API int rua_init(void);
 
 /**
- * finalize rua
- * return This method returns 0 (SUCCESS) or -1 (FAIL)
+ * @brief	Finalize rua
+ * @return	0 on success, otherwise a nagative error value
+ * @retval	0 on successful
+ * @retval	-1 on failed
  */
 API int rua_fini(void);
 

@@ -1,7 +1,7 @@
 /*
  *  RUA
  *
- * Copyright (c) 2000 - 2011 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2000 - 2012 Samsung Electronics Co., Ltd. All rights reserved.
  *
  * Contact: Jayoun Lee <airjany@samsung.com>
  *
@@ -101,25 +101,6 @@ int rua_delete_history_with_apppath(char *app_path)
 	return r;
 }
 
-int rua_delete_history(char *app_path)
-{
-	int r;
-	char query[QUERY_MAXLEN];
-
-	if (_db == NULL)
-		return -1;
-
-	if (app_path == NULL)
-		return -1;
-
-	snprintf(query, QUERY_MAXLEN, "delete from %s where app_path = '%s';",
-		RUA_HISTORY, app_path);
-
-	r = __exec(_db, query);
-
-	return r;
-}
-
 int rua_add_history(struct rua_rec *rec)
 {
 	int r;
@@ -148,7 +129,7 @@ int rua_add_history(struct rua_rec *rec)
 	}
 	sqlite3_finalize(stmt);
 
-	if (cnt == 0) {
+	if (cnt == 0)
 		/* insert */
 		snprintf(query, QUERY_MAXLEN,
 			"insert into %s ( pkg_name, app_path, arg, launch_time ) "
@@ -157,19 +138,12 @@ int rua_add_history(struct rua_rec *rec)
 			rec->pkg_name ? rec->pkg_name : "",
 			rec->app_path ? rec->app_path : "",
 			rec->arg ? rec->arg : "", time(NULL));
-	} else {
+	else
 		/* update */
-		if (rec->arg) {
-			snprintf(query, QUERY_MAXLEN,
-				"update %s set arg='%s', launch_time='%d' where pkg_name = '%s';",
-				RUA_HISTORY,
-				rec->arg, time(NULL), rec->pkg_name);
-		} else {
-			snprintf(query, QUERY_MAXLEN,
-				"update %s set launch_time='%d' where pkg_name = '%s';",
-				RUA_HISTORY, time(NULL), rec->pkg_name);
-		}
-	}
+		snprintf(query, QUERY_MAXLEN,
+			"update %s set arg='%s', launch_time='%d' where pkg_name = '%s';",
+			RUA_HISTORY,
+			rec->arg ? rec->arg : "", time(NULL), rec->pkg_name);
 
 	r = __exec(_db, query);
 	if (r == -1) {
@@ -212,8 +186,9 @@ int rua_history_unload_db(char ***table)
 	if (*table) {
 		sqlite3_free_table(*table);
 		*table = NULL;
+		return 0;
 	}
-	return 0;
+	return -1;
 }
 
 int rua_history_get_rec(struct rua_rec *rec, char **table, int nrows, int ncols,
