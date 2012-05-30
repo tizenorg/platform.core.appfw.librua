@@ -6,6 +6,7 @@ Release:    33
 Group:      System/Libraries
 License:    Apache License, Version 2.0
 Source0:    librua-%{version}.tar.gz
+Source1001: packaging/librua.manifest 
 Requires(post): /sbin/ldconfig
 Requires(post): /usr/bin/sqlite3
 Requires(postun): /sbin/ldconfig
@@ -33,6 +34,7 @@ Recently used application library (devel)
 
 
 %build
+cp %{SOURCE1001} .
 cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix}
 
 
@@ -57,6 +59,7 @@ chmod 660 /opt/dbspace/.rua.db-journal
 
 
 %files
+%manifest librua.manifest
 %defattr(-,root,root,-)
 %config(missingok) /opt/share/rua_db.sql
 /usr/lib/librua.so.*
@@ -64,6 +67,7 @@ chmod 660 /opt/dbspace/.rua.db-journal
 
 
 %files devel
+%manifest librua.manifest
 %defattr(-,root,root,-)
 /usr/include/rua/*.h
 /usr/lib/librua.so
