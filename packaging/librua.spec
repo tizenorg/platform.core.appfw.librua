@@ -8,7 +8,6 @@ License:    Apache License, Version 2.0
 Source0:    librua-%{version}.tar.gz
 Source1001: packaging/librua.manifest 
 Requires(post): /sbin/ldconfig
-Requires(post): /usr/bin/sqlite3
 Requires(postun): /sbin/ldconfig
 BuildRequires:  cmake
 BuildRequires:  pkgconfig(sqlite3)
@@ -44,15 +43,10 @@ make %{?jobs:-j%jobs}
 rm -rf %{buildroot}
 %make_install
 
-%post
-/sbin/ldconfig
-mkdir -p /opt/dbspace/
-sqlite3 /opt/dbspace/.rua.db < /opt/share/rua_db.sql
-rm -rf /opt/share/rua_db.sql
-chown 0:5000 /opt/dbspace/.rua.db
-chown 0:5000 /opt/dbspace/.rua.db-journal
-chmod 660 /opt/dbspace/.rua.db
-chmod 660 /opt/dbspace/.rua.db-journal
+mkdir -p %{buildroot}/opt/dbspace/
+sqlite3 %{buildroot}/opt/dbspace/.rua.db < %{buildroot}/opt/share/rua_db.sql
+
+%post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
 
@@ -62,6 +56,8 @@ chmod 660 /opt/dbspace/.rua.db-journal
 %manifest librua.manifest
 %defattr(-,root,root,-)
 %config(missingok) /opt/share/rua_db.sql
+%attr(660,root,app) /opt/dbspace/.rua.db
+%attr(660,root,app) /opt/dbspace/.rua.db-journal
 /usr/lib/librua.so.*
 
 
