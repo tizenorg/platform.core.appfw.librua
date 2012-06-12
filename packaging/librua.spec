@@ -56,8 +56,8 @@ sqlite3 %{buildroot}/opt/dbspace/.rua.db < %{buildroot}/opt/share/rua_db.sql
 %manifest librua.manifest
 %defattr(-,root,root,-)
 %config(missingok) /opt/share/rua_db.sql
-%attr(660,root,app) /opt/dbspace/.rua.db
-%attr(660,root,app) /opt/dbspace/.rua.db-journal
+%config %attr(660,root,app) /opt/dbspace/.rua.db
+%config %attr(660,root,app) /opt/dbspace/.rua.db-journal
 /usr/lib/librua.so.*
 
 
