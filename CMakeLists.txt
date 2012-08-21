@@ -7,7 +7,10 @@ SET(LIBDIR "\${prefix}/lib")
 SET(INCLUDEDIR "\${prefix}/include/${PROJECT_NAME}")
 SET(VERSION 0.1.0)
 
-SET(SRCS rua.c)
+SET(SRCS
+	src/perf-measure.c
+	src/rua.c
+)
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
 
@@ -39,3 +42,5 @@ INSTALL(FILES ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}.pc DESTINATION lib/pkg
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/rua.h DESTINATION include/${PROJECT_NAME})
 
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/data/rua_db.sql DESTINATION /opt/share/)
+
+#ADD_SUBDIRECTORY(test)

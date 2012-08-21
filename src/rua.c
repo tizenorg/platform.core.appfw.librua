@@ -21,7 +21,6 @@
 
 /*
  * @file    rua.c
- * @author  Noha Park (noha.park@samsung.com)
  * @version 0.1
  */
 
@@ -33,6 +32,7 @@
 
 #include "rua.h"
 #include "db-schema.h"
+#include "perf-measure.h"
 
 #define RUA_DB_PATH	"/opt/dbspace"
 #define RUA_DB_NAME	".rua.db"
@@ -108,6 +108,9 @@ int rua_add_history(struct rua_rec *rec)
 	char query[QUERY_MAXLEN];
 	sqlite3_stmt *stmt;
 
+	unsigned int timestamp;
+	timestamp = PERF_MEASURE_START("RUA");
+
 	if (_db == NULL)
 		return -1;
 
@@ -150,6 +153,8 @@ int rua_add_history(struct rua_rec *rec)
 		printf("[RUA ADD HISTORY ERROR] %s\n", query);
 		return -1;
 	}
+
+	PERF_MEASURE_END("RUA", timestamp);
 
 	return r;
 }
@@ -268,6 +273,9 @@ int rua_is_latest_app(const char *pkg_name)
 
 int rua_init(void)
 {
+	unsigned int timestamp;
+	timestamp = PERF_MEASURE_START("RUA");
+
 	if (_db) {
 		return 0;
 	}
@@ -279,16 +287,22 @@ int rua_init(void)
 	if (_db == NULL)
 		return -1;
 
+	PERF_MEASURE_END("RUA", timestamp);
+
 	return 0;
 }
 
 int rua_fini(void)
 {
+	unsigned int timestamp;
+	timestamp = PERF_MEASURE_START("RUA");
+
 	if (_db) {
 		db_util_close(_db);
 		_db = NULL;
 	}
 
+	PERF_MEASURE_END("RUA", timestamp);
 	return 0;
 }
 
