@@ -1,10 +1,9 @@
-
 Name:       librua
 Summary:    Recently used application
 Version:    0.1.0
 Release:    34
-Group:      System/Libraries
-License:    Apache License, Version 2.0
+Group:      Application Framework/Libraries
+License:    Apache-2.0
 Source0:    librua-%{version}.tar.gz
 Requires(post): /sbin/ldconfig
 Requires(post): /usr/bin/sqlite3
@@ -13,11 +12,8 @@ BuildRequires:  cmake
 BuildRequires:  pkgconfig(sqlite3)
 BuildRequires:  pkgconfig(db-util)
 
-
 %description
 Recently used application library
-
-
 
 %package devel
 Summary:    Recently used application (devel)
@@ -27,19 +23,15 @@ Requires:   %{name} = %{version}-%{release}
 %description devel
 Recently used application library (devel)
 
-
 %prep
-%setup -q -n %{name}-%{version}
-
+%setup -q
 
 %build
-cmake . -DCMAKE_INSTALL_PREFIX=%{_prefix}
-
+%cmake .
 
 make %{?jobs:-j%jobs}
 
 %install
-rm -rf %{buildroot}
 %make_install
 
 %post
@@ -56,19 +48,15 @@ chsmack -a rua::db /opt/dbspace/.rua.db-journal
 
 %postun -p /sbin/ldconfig
 
-
-
 %files
 %manifest librua.manifest
 %defattr(-,root,root,-)
 %config(missingok) /opt/share/rua_db.sql
-/usr/lib/librua.so.*
-
-
+%{_libdir}/librua.so.*
 
 %files devel
 %defattr(-,root,root,-)
 /usr/include/rua/*.h
-/usr/lib/librua.so
-/usr/lib/pkgconfig/rua.pc
+%{_libdir}/librua.so
+%{_libdir}/pkgconfig/rua.pc
 
