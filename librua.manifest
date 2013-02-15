@@ -1,0 +1,15 @@
+<manifest>
+	<define>
+		<domain name="rua"/>
+		<provide>
+			<label name="rua::db"/>
+		</provide>
+	</define>
+	<request>
+		<domain name="rua"/>
+	</request>
+	<assign>
+		<filesystem path="/usr/lib/librua.so.0" label="_"/>
+		<filesystem path="/usr/lib/librua.so.0.1.0" label="_"/>
+	</assign>
+</manifest>
