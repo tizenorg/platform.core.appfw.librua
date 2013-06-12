@@ -1,0 +1,8 @@
+Change-Id: I0cdf26332a93159130e3a70917667d82f81dab34
+Code-Review+2: Anas Nashif <anas.nashif@intel.com>
+Verified+1: Baptiste DURAND <baptiste.durand@eurogiciel.fr>
+Submitted-by: Anas Nashif <anas.nashif@intel.com>
+Submitted-at: Wed, 12 Jun 2013 05:01:05 -0700
+Reviewed-on: https://review.tizen.org/gerrit/3833
+Project: platform/core/appfw/librua
+Branch: refs/heads/tizen
