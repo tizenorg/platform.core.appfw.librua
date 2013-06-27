@@ -1,0 +1,10 @@
+Change-Id: I267d84f9b9d74341a1a13054d3e5ae4992be74db
+Code-Review+1: Patrick McCarty <patrick.mccarty@linux.intel.com>
+Code-Review+2: Anas Nashif <anas.nashif@intel.com>
+Verified+1: Anas Nashif <anas.nashif@intel.com>
+Code-Review+1: William Douglas <william.douglas@intel.com>
+Submitted-by: Anas Nashif <anas.nashif@intel.com>
+Submitted-at: Thu, 27 Jun 2013 14:13:45 -0700
+Reviewed-on: https://review.tizen.org/gerrit/4340
+Project: platform/core/appfw/librua
+Branch: refs/heads/tizen
