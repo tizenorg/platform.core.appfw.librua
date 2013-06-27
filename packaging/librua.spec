@@ -1,24 +1,21 @@
-Name:       librua
-Summary:    Recently used application
-Version:    0.1.0
-Release:    34
-Group:      Application Framework/Libraries
-License:    Apache-2.0
-Source0:    librua-%{version}.tar.gz
-Requires(post): /sbin/ldconfig
-Requires(post): /usr/bin/sqlite3
-Requires(postun): /sbin/ldconfig
+Name:           librua
+Version:        0.1.0
+Release:        34
+License:        Apache-2.0
+Summary:        Recently used application
+Group:          Application Framework/Libraries
+Source0:        librua-%{version}.tar.gz
 BuildRequires:  cmake
-BuildRequires:  pkgconfig(sqlite3)
+BuildRequires:  sqlite3
 BuildRequires:  pkgconfig(db-util)
+BuildRequires:  pkgconfig(sqlite3)
 
 %description
 Recently used application library
 
 %package devel
-Summary:    Recently used application (devel)
-Group:      Development/Libraries
-Requires:   %{name} = %{version}-%{release}
+Summary:        Recently used application (devel)
+Requires:       %{name} = %{version}
 
 %description devel
 Recently used application library (devel)
@@ -28,35 +25,28 @@ Recently used application library (devel)
 
 %build
 %cmake .
-
-make %{?jobs:-j%jobs}
+make %{?_smp_mflags}
 
 %install
 %make_install
+mkdir -p %{buildroot}/opt/dbspace
+sqlite3 %{buildroot}/opt/dbspace/.rua.db < data/rua_db.sql
 
-%post
-/sbin/ldconfig
-mkdir -p /opt/dbspace/
-sqlite3 /opt/dbspace/.rua.db < /opt/share/rua_db.sql
-rm -rf /opt/share/rua_db.sql
-chown 0:5000 /opt/dbspace/.rua.db
-chown 0:5000 /opt/dbspace/.rua.db-journal
-chmod 660 /opt/dbspace/.rua.db
-chmod 660 /opt/dbspace/.rua.db-journal
-chsmack -a rua::db /opt/dbspace/.rua.db
-chsmack -a rua::db /opt/dbspace/.rua.db-journal
+%post -p /sbin/ldconfig
 
 %postun -p /sbin/ldconfig
 
 %files
 %manifest librua.manifest
 %defattr(-,root,root,-)
-%config(missingok) /opt/share/rua_db.sql
+%config(noreplace) %attr(0660,root,app) /opt/dbspace/.rua.db*
 %{_libdir}/librua.so.*
+%license LICENSE
 
 %files devel
 %defattr(-,root,root,-)
-/usr/include/rua/*.h
+%dir %{_includedir}/rua
+%{_includedir}/rua/*.h
 %{_libdir}/librua.so
 %{_libdir}/pkgconfig/rua.pc
 
