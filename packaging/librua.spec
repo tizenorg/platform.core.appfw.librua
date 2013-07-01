@@ -5,6 +5,7 @@ License:        Apache-2.0
 Summary:        Recently used application
 Group:          Application Framework/Libraries
 Source0:        librua-%{version}.tar.gz
+Source1001: 	librua.manifest
 BuildRequires:  cmake
 BuildRequires:  sqlite3
 BuildRequires:  pkgconfig(db-util)
@@ -22,6 +23,7 @@ Recently used application library (devel)
 
 %prep
 %setup -q
+cp %{SOURCE1001} .
 
 %build
 %cmake .
@@ -37,13 +39,14 @@ sqlite3 %{buildroot}/opt/dbspace/.rua.db < data/rua_db.sql
 %postun -p /sbin/ldconfig
 
 %files
-%manifest librua.manifest
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 %config(noreplace) %attr(0660,root,app) /opt/dbspace/.rua.db*
 %{_libdir}/librua.so.*
 %license LICENSE
 
 %files devel
+%manifest %{name}.manifest
 %defattr(-,root,root,-)
 %dir %{_includedir}/rua
 %{_includedir}/rua/*.h
