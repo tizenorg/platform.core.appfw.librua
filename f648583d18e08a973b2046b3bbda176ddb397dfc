@@ -1,0 +1,8 @@
+Change-Id: If648583d18e08a973b2046b3bbda176ddb397dfc
+Code-Review+2: Ryan Ware <ware@linux.intel.com>
+Verified+1: Ryan Ware <ware@linux.intel.com>
+Submitted-by: Ryan Ware <ware@linux.intel.com>
+Submitted-at: Mon, 08 Jul 2013 10:07:26 -0700
+Reviewed-on: https://review.tizen.org/gerrit/4469
+Project: platform/core/appfw/librua
+Branch: refs/heads/tizen
