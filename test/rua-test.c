@@ -25,6 +25,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* For multi-user support */
+#include <tzplatform_config.h>
+
 #include "rua.h"
 
 int __add_history(char *pkgname)
@@ -33,7 +36,7 @@ int __add_history(char *pkgname)
 	struct rua_rec rec;
 	char apppath[FILENAME_MAX] = "";
 
-	snprintf(apppath, "/opt/apps/%s", pkgname, FILENAME_MAX);
+	apppath = tzplatform_mkpath(TZ_SYS_RW_APP, pkgname);
 	memset(&rec, 0, sizeof(rec));
 	rec.pkg_name = pkgname;
 	rec.app_path = apppath;

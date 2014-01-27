@@ -1,15 +1,16 @@
 Name:           librua
 Version:        0.1.0
-Release:        34
+Release:        0
 License:        Apache-2.0
 Summary:        Recently used application
 Group:          Application Framework/Libraries
 Source0:        librua-%{version}.tar.gz
-Source1001: 	librua.manifest
+Source1001:     librua.manifest
 BuildRequires:  cmake
 BuildRequires:  sqlite3
 BuildRequires:  pkgconfig(db-util)
 BuildRequires:  pkgconfig(sqlite3)
+BuildRequires:  pkgconfig(libtzplatform-config)
 
 %description
 Recently used application library
@@ -31,8 +32,8 @@ make %{?_smp_mflags}
 
 %install
 %make_install
-mkdir -p %{buildroot}/opt/dbspace
-sqlite3 %{buildroot}/opt/dbspace/.rua.db < data/rua_db.sql
+mkdir -p %{buildroot}%{TZ_SYS_DB}
+sqlite3 %{buildroot}%{TZ_SYS_DB}/.rua.db < data/rua_db.sql
 
 %post -p /sbin/ldconfig
 
@@ -41,7 +42,7 @@ sqlite3 %{buildroot}/opt/dbspace/.rua.db < data/rua_db.sql
 %files
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
-%config(noreplace) %attr(0660,root,app) /opt/dbspace/.rua.db*
+%config(noreplace) %attr(0660,root,%{TZ_SYS_USER_GROUP}) %{TZ_SYS_DB}/.rua.db*
 %{_libdir}/librua.so.*
 %license LICENSE
 
