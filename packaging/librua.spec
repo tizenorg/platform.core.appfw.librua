@@ -22,6 +22,13 @@ Requires:       %{name} = %{version}
 %description devel
 Recently used application library (devel)
 
+%package test
+Summary:        Recently used application (test)
+Requires:       %{name} = %{version}
+
+%description test
+Recently used application library (test)
+
 %prep
 %setup -q
 cp %{SOURCE1001} .
@@ -50,3 +57,8 @@ make %{?_smp_mflags}
 %{_includedir}/rua/*.h
 %{_libdir}/librua.so
 %{_libdir}/pkgconfig/rua.pc
+
+%files test
+%manifest %{name}.manifest
+%defattr(-,root,root,-)
+%{_bindir}/rua-test
