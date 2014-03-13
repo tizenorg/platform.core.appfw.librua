@@ -32,8 +32,6 @@ make %{?_smp_mflags}
 
 %install
 %make_install
-mkdir -p %{buildroot}%{TZ_SYS_DB}
-sqlite3 %{buildroot}%{TZ_SYS_DB}/.rua.db < data/rua_db.sql
 
 %post -p /sbin/ldconfig
 
@@ -42,7 +40,6 @@ sqlite3 %{buildroot}%{TZ_SYS_DB}/.rua.db < data/rua_db.sql
 %files
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
-%config(noreplace) %attr(0660,root,%{TZ_SYS_USER_GROUP}) %{TZ_SYS_DB}/.rua.db*
 %{_libdir}/librua.so.*
 %license LICENSE
 
@@ -53,4 +50,3 @@ sqlite3 %{buildroot}%{TZ_SYS_DB}/.rua.db < data/rua_db.sql
 %{_includedir}/rua/*.h
 %{_libdir}/librua.so
 %{_libdir}/pkgconfig/rua.pc
-

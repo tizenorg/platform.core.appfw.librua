@@ -30,11 +30,13 @@
 
 #include <db-util.h>
 
+/* For multi-user support */
+#include <tzplatform_config.h>
+
 #include "rua.h"
 #include "db-schema.h"
 #include "perf-measure.h"
 
-#define RUA_DB_PATH	"/opt/dbspace"
 #define RUA_DB_NAME	".rua.db"
 #define RUA_HISTORY	"rua_history"
 #define QUERY_MAXLEN	4096
@@ -281,7 +283,8 @@ int rua_init(void)
 	}
 
 	char defname[FILENAME_MAX];
-	snprintf(defname, sizeof(defname), "%s/%s", RUA_DB_PATH, RUA_DB_NAME);
+	const char *rua_db_path = tzplatform_getenv(TZ_USER_DB);
+	snprintf(defname, sizeof(defname), "%s/%s", rua_db_path, RUA_DB_NAME);
 	_db = __db_init(defname);
 
 	if (_db == NULL)
@@ -340,7 +343,7 @@ static sqlite3 *__db_init(char *root)
 	int r;
 	sqlite3 *db = NULL;
 
-	r = db_util_open(root, &db, 0);
+	r = db_util_open_with_options(root, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL);
 	if (r) {
 		db_util_close(db);
 		return NULL;

@@ -34,9 +34,8 @@ int __add_history(char *pkgname)
 {
 	int ret = 0;
 	struct rua_rec rec;
-	char apppath[FILENAME_MAX] = "";
+	const char *apppath = tzplatform_mkpath(TZ_SYS_RW_APP, pkgname);
 
-	apppath = tzplatform_mkpath(TZ_SYS_RW_APP, pkgname);
 	memset(&rec, 0, sizeof(rec));
 	rec.pkg_name = pkgname;
 	rec.app_path = apppath;
@@ -52,7 +51,6 @@ int __add_history(char *pkgname)
 	rua_fini();
 
 	return ret;
-
 }
 
 int main(int argc, char* argv[])
@@ -64,5 +62,3 @@ int main(int argc, char* argv[])
 	ret = __add_history(argv[1]);
 	return 0;
 }
-
-

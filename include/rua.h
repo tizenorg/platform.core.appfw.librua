@@ -20,7 +20,7 @@
  */
 
 /**
- * @file 	rua.h
+ * @file        rua.h
  * @brief       RUA API declaration header file.
  * @author      Jinwoo Nam (jwoo.nam@samsung.com)
  * @version     0.1
