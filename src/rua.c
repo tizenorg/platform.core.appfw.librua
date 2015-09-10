@@ -167,6 +167,7 @@ int rua_history_load_db(char ***table, int *nrows, int *ncols)
 	char query[QUERY_MAXLEN];
 	char *db_err = NULL;
 	char **db_result = NULL;
+	sqlite3 *db = NULL;
 
 	if (table == NULL)
 		return -1;
@@ -175,15 +176,24 @@ int rua_history_load_db(char ***table, int *nrows, int *ncols)
 	if (ncols == NULL)
 		return -1;
 
+	r = db_util_open_with_options(root, &db, SQLITE_OPEN_READONLY, NULL);
+	if (r) {
+		db_util_close(db);
+		return -1;
+	}
+
 	snprintf(query, QUERY_MAXLEN,
 		 "select * from %s order by launch_time desc;", RUA_HISTORY);
 
-	r = sqlite3_get_table(_db, query, &db_result, nrows, ncols, &db_err);
+	r = sqlite3_get_table(db, query, &db_result, nrows, ncols, &db_err);
 
 	if (r == SQLITE_OK)
 		*table = db_result;
 	else
 		sqlite3_free_table(db_result);
+
+	if (db)
+		db_util_close(db);
 
 	return r;
 }
@@ -243,12 +253,19 @@ int rua_history_get_rec(struct rua_rec *rec, char **table, int nrows, int ncols,
 
 int rua_is_latest_app(const char *pkg_name)
 {
-	int r;
+	int r = -1;
 	sqlite3_stmt *stmt;
 	const unsigned char *ct;
+	sqlite3 *db;
 
-	if (!pkg_name || !_db)
+	if (!pkg_name)
 		return -1;
+
+	r = db_util_open_with_options(root, &db, SQLITE_OPEN_READONLY, NULL);
+	if (r) {
+		db_util_close(db);
+		return -1;
+	}
 
 	r = sqlite3_prepare(_db, Q_LATEST, sizeof(Q_LATEST), &stmt, NULL);
 	if (r != SQLITE_OK) {
@@ -259,18 +276,23 @@ int rua_is_latest_app(const char *pkg_name)
 	if (r == SQLITE_ROW) {
 		ct = sqlite3_column_text(stmt, 0);
 		if (ct == NULL || ct[0] == '\0') {
-			sqlite3_finalize(stmt);
-			return -1;
+			r = -1;
+			goto out;
 		}
 
 		if (strncmp(pkg_name, ct, strlen(pkg_name)) == 0) {
-			sqlite3_finalize(stmt);
-			return 0;
+			r = 0;
+			goto out;
 		}
 	}
 
-	sqlite3_finalize(stmt);
-	return -1;
+out:
+	if (stmt)
+		sqlite3_finalize(stmt);
+	if (db)
+		db_util_close(db);
+
+	return r;
 }
 
 int rua_init(void)
