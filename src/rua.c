@@ -45,10 +45,11 @@
 	"order by launch_time desc limit 1 "
 
 static sqlite3 *_db = NULL;
+static sqlite3 *_db_r = NULL;
 
 static int __exec(sqlite3 *db, char *query);
 static int __create_table(sqlite3 *db);
-static sqlite3 *__db_init(char *root);
+static sqlite3 *__db_init(char *root, int flags);
 
 int rua_clear_history(void)
 {
@@ -178,7 +179,7 @@ int rua_history_load_db(char ***table, int *nrows, int *ncols)
 	snprintf(query, QUERY_MAXLEN,
 		 "select * from %s order by launch_time desc;", RUA_HISTORY);
 
-	r = sqlite3_get_table(_db, query, &db_result, nrows, ncols, &db_err);
+	r = sqlite3_get_table(_db_r, query, &db_result, nrows, ncols, &db_err);
 
 	if (r == SQLITE_OK)
 		*table = db_result;
@@ -247,10 +248,10 @@ int rua_is_latest_app(const char *pkg_name)
 	sqlite3_stmt *stmt;
 	const unsigned char *ct;
 
-	if (!pkg_name || !_db)
+	if (!pkg_name || !_db_r)
 		return -1;
 
-	r = sqlite3_prepare(_db, Q_LATEST, sizeof(Q_LATEST), &stmt, NULL);
+	r = sqlite3_prepare(_db_r, Q_LATEST, sizeof(Q_LATEST), &stmt, NULL);
 	if (r != SQLITE_OK) {
 		return -1;
 	}
@@ -278,16 +279,17 @@ int rua_init(void)
 	unsigned int timestamp;
 	timestamp = PERF_MEASURE_START("RUA");
 
-	if (_db) {
-		return 0;
-	}
-
 	char defname[FILENAME_MAX];
 	const char *rua_db_path = tzplatform_getenv(TZ_USER_DB);
 	snprintf(defname, sizeof(defname), "%s/%s", rua_db_path, RUA_DB_NAME);
-	_db = __db_init(defname);
 
-	if (_db == NULL)
+	if (!_db)
+		_db = __db_init(defname, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE);
+
+	if (!_db_r)
+		_db_r = __db_init(defname, SQLITE_OPEN_READONLY);
+
+	if (_db == NULL || _db_r == NULL)
 		return -1;
 
 	PERF_MEASURE_END("RUA", timestamp);
@@ -303,6 +305,11 @@ int rua_fini(void)
 	if (_db) {
 		db_util_close(_db);
 		_db = NULL;
+	}
+
+	if (_db_r) {
+		db_util_close(_db_r);
+		_db_r = NULL;
 	}
 
 	PERF_MEASURE_END("RUA", timestamp);
@@ -338,12 +345,12 @@ static int __create_table(sqlite3 *db)
 	return 0;
 }
 
-static sqlite3 *__db_init(char *root)
+static sqlite3 *__db_init(char *root, int flags)
 {
 	int r;
 	sqlite3 *db = NULL;
 
-	r = db_util_open_with_options(root, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL);
+	r = db_util_open_with_options(root, &db, flags, NULL);
 	if (r) {
 		db_util_close(db);
 		return NULL;
