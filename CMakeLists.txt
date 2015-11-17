@@ -9,6 +9,7 @@ SET(VERSION 0.1.0)
 SET(SRCS
 	src/perf-measure.c
 	src/rua.c
+	src/rua_stat.c
 )
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)

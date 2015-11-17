@@ -32,6 +32,14 @@
 
 /* For multi-user support */
 #include <tzplatform_config.h>
+#include <dlog.h>
+
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif
+
+#define LOG_TAG "RUA"
+
 
 #include "rua.h"
 #include "db-schema.h"
@@ -113,11 +121,15 @@ int rua_add_history(struct rua_rec *rec)
 	unsigned int timestamp;
 	timestamp = PERF_MEASURE_START("RUA");
 
-	if (_db == NULL)
+	if (_db == NULL) {
+		LOGE("Error db null");
 		return -1;
+	}
 
-	if (rec == NULL)
+	if (rec == NULL) {
+		LOGE("Error rec null");
 		return -1;
+	}
 
 	snprintf(query, QUERY_MAXLEN,
 		"select count(*) from %s where pkg_name = '%s';", RUA_HISTORY,
@@ -125,6 +137,7 @@ int rua_add_history(struct rua_rec *rec)
 
 	r = sqlite3_prepare(_db, query, sizeof(query), &stmt, NULL);
 	if (r != SQLITE_OK) {
+		LOGE("Error sqlite3_prepare fail");
 		return -1;
 	}
 
