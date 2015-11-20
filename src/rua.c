@@ -40,7 +40,6 @@
 
 #define LOG_TAG "RUA"
 
-
 #include "rua.h"
 #include "db-schema.h"
 #include "perf-measure.h"
@@ -52,24 +51,26 @@
 	"select pkg_name from rua_history " \
 	"order by launch_time desc limit 1 "
 
-static sqlite3 *_db = NULL;
-
 static int __exec(sqlite3 *db, char *query);
 static int __create_table(sqlite3 *db);
-static sqlite3 *__db_init(char *root);
+static sqlite3 *__db_init();
 
 int rua_clear_history(void)
 {
 	int r;
 	char query[QUERY_MAXLEN];
+	sqlite3 *db = NULL;
 
-	if (_db == NULL)
+	db = __db_init();
+	if (db == NULL) {
+		LOGE("Error db null");
 		return -1;
+	}
 
 	snprintf(query, QUERY_MAXLEN, "delete from %s;", RUA_HISTORY);
 
-	r = __exec(_db, query);
-
+	r = __exec(db, query);
+	db_util_close(db);
 	return r;
 }
 
@@ -78,17 +79,24 @@ int rua_delete_history_with_pkgname(char *pkg_name)
 	int r;
 	char query[QUERY_MAXLEN];
 
-	if (_db == NULL)
-		return -1;
+	sqlite3 *db = NULL;
 
-	if (pkg_name == NULL)
+	db = __db_init();
+	if (db == NULL) {
+		LOGE("Error db null");
 		return -1;
+	}
+
+	if (pkg_name == NULL) {
+		db_util_close(db);
+		return -1;
+	}
 
 	snprintf(query, QUERY_MAXLEN, "delete from %s where pkg_name = '%s';",
 		RUA_HISTORY, pkg_name);
 
-	r = __exec(_db, query);
-
+	r = __exec(db, query);
+	db_util_close(db);
 	return r;
 }
 
@@ -96,18 +104,24 @@ int rua_delete_history_with_apppath(char *app_path)
 {
 	int r;
 	char query[QUERY_MAXLEN];
+	sqlite3 *db = NULL;
 
-	if (_db == NULL)
+	db = __db_init();
+	if (db == NULL) {
+		LOGE("Error db null");
 		return -1;
+	}
 
-	if (app_path == NULL)
+	if (app_path == NULL) {
+		db_util_close(db);
 		return -1;
+	}
 
 	snprintf(query, QUERY_MAXLEN, "delete from %s where app_path = '%s';",
 		RUA_HISTORY, app_path);
 
-	r = __exec(_db, query);
-
+	r = __exec(db, query);
+	db_util_close(db);
 	return r;
 }
 
@@ -117,17 +131,20 @@ int rua_add_history(struct rua_rec *rec)
 	int cnt = 0;
 	char query[QUERY_MAXLEN];
 	sqlite3_stmt *stmt;
+	sqlite3 *db = NULL;
 
 	unsigned int timestamp;
 	timestamp = PERF_MEASURE_START("RUA");
 
-	if (_db == NULL) {
+	db = __db_init();
+	if (db == NULL) {
 		LOGE("Error db null");
 		return -1;
 	}
 
 	if (rec == NULL) {
 		LOGE("Error rec null");
+		db_util_close(db);
 		return -1;
 	}
 
@@ -135,16 +152,17 @@ int rua_add_history(struct rua_rec *rec)
 		"select count(*) from %s where pkg_name = '%s';", RUA_HISTORY,
 		rec->pkg_name);
 
-	r = sqlite3_prepare(_db, query, sizeof(query), &stmt, NULL);
+	r = sqlite3_prepare(db, query, sizeof(query), &stmt, NULL);
 	if (r != SQLITE_OK) {
 		LOGE("Error sqlite3_prepare fail");
+		db_util_close(db);
 		return -1;
 	}
 
 	r = sqlite3_step(stmt);
-	if (r == SQLITE_ROW) {
+	if (r == SQLITE_ROW)
 		cnt = sqlite3_column_int(stmt, 0);
-	}
+
 	sqlite3_finalize(stmt);
 
 	if (cnt == 0)
@@ -163,14 +181,15 @@ int rua_add_history(struct rua_rec *rec)
 			RUA_HISTORY,
 			rec->arg ? rec->arg : "", time(NULL), rec->pkg_name);
 
-	r = __exec(_db, query);
+	r = __exec(db, query);
 	if (r == -1) {
-		printf("[RUA ADD HISTORY ERROR] %s\n", query);
+		LOGE("[RUA ADD HISTORY ERROR] %s\n", query);
+		db_util_close(db);
 		return -1;
 	}
 
 	PERF_MEASURE_END("RUA", timestamp);
-
+	db_util_close(db);
 	return r;
 }
 
@@ -184,6 +203,10 @@ int rua_history_load_db(char ***table, int *nrows, int *ncols)
 
 	char defname[FILENAME_MAX];
 	const char *rua_db_path = tzplatform_getenv(TZ_USER_DB);
+	if (rua_db_path == NULL) {
+		LOGE("fail to get rua_db_path");
+		return -1;
+	}
 	snprintf(defname, sizeof(defname), "%s/%s", rua_db_path, RUA_DB_NAME);
 
 	if (table == NULL)
@@ -209,8 +232,7 @@ int rua_history_load_db(char ***table, int *nrows, int *ncols)
 	else
 		sqlite3_free_table(db_result);
 
-	if (db)
-		db_util_close(db);
+	db_util_close(db);
 
 	return r;
 }
@@ -277,6 +299,10 @@ int rua_is_latest_app(const char *pkg_name)
 
 	char defname[FILENAME_MAX];
 	const char *rua_db_path = tzplatform_getenv(TZ_USER_DB);
+	if (rua_db_path == NULL) {
+		LOGE("fail to get rua_db_path");
+		return -1;
+	}
 	snprintf(defname, sizeof(defname), "%s/%s", rua_db_path, RUA_DB_NAME);
 
 	if (!pkg_name)
@@ -290,6 +316,7 @@ int rua_is_latest_app(const char *pkg_name)
 
 	r = sqlite3_prepare(db, Q_LATEST, sizeof(Q_LATEST), &stmt, NULL);
 	if (r != SQLITE_OK) {
+		db_util_close(db);
 		return -1;
 	}
 
@@ -318,37 +345,11 @@ out:
 
 int rua_init(void)
 {
-	unsigned int timestamp;
-	timestamp = PERF_MEASURE_START("RUA");
-
-	if (_db) {
-		return 0;
-	}
-
-	char defname[FILENAME_MAX];
-	const char *rua_db_path = tzplatform_getenv(TZ_USER_DB);
-	snprintf(defname, sizeof(defname), "%s/%s", rua_db_path, RUA_DB_NAME);
-	_db = __db_init(defname);
-
-	if (_db == NULL)
-		return -1;
-
-	PERF_MEASURE_END("RUA", timestamp);
-
 	return 0;
 }
 
 int rua_fini(void)
 {
-	unsigned int timestamp;
-	timestamp = PERF_MEASURE_START("RUA");
-
-	if (_db) {
-		db_util_close(_db);
-		_db = NULL;
-	}
-
-	PERF_MEASURE_END("RUA", timestamp);
 	return 0;
 }
 
@@ -381,12 +382,20 @@ static int __create_table(sqlite3 *db)
 	return 0;
 }
 
-static sqlite3 *__db_init(char *root)
+static sqlite3 *__db_init()
 {
 	int r;
 	sqlite3 *db = NULL;
 
-	r = db_util_open_with_options(root, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL);
+	char defname[FILENAME_MAX];
+	const char *rua_db_path = tzplatform_getenv(TZ_USER_DB);
+	if (rua_db_path == NULL) {
+		LOGE("fail to get rua_db_path");
+		return NULL;
+	}
+	snprintf(defname, sizeof(defname), "%s/%s", rua_db_path, RUA_DB_NAME);
+
+	r = db_util_open_with_options(defname, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL);
 	if (r) {
 		db_util_close(db);
 		return NULL;
