@@ -62,3 +62,4 @@ make %{?_smp_mflags}
 %manifest %{name}.manifest
 %defattr(-,root,root,-)
 %{_bindir}/rua-test
+
