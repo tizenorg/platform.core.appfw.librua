@@ -56,15 +56,22 @@ static sqlite3 *_db = NULL;
 
 static int __exec(sqlite3 *db, char *query);
 static int __create_table(sqlite3 *db);
-static sqlite3 *__db_init(char *root);
+static sqlite3 *__db_init();
 
 int rua_clear_history(void)
 {
 	int r;
 	char query[QUERY_MAXLEN];
 
-	if (_db == NULL)
-		return -1;
+	if (_db == NULL) {
+		_db = __db_init();
+		if (_db == NULL) {
+			LOGE("Error db null");
+			return -1;
+		}
+
+		return 0;
+	}
 
 	snprintf(query, QUERY_MAXLEN, "delete from %s;", RUA_HISTORY);
 
@@ -78,8 +85,15 @@ int rua_delete_history_with_pkgname(char *pkg_name)
 	int r;
 	char query[QUERY_MAXLEN];
 
-	if (_db == NULL)
-		return -1;
+	if (_db == NULL) {
+		_db = __db_init();
+		if (_db == NULL) {
+			LOGE("Error db null");
+			return -1;
+		}
+
+		return 0;
+	}
 
 	if (pkg_name == NULL)
 		return -1;
@@ -97,8 +111,15 @@ int rua_delete_history_with_apppath(char *app_path)
 	int r;
 	char query[QUERY_MAXLEN];
 
-	if (_db == NULL)
-		return -1;
+	if (_db == NULL) {
+		_db = __db_init();
+		if (_db == NULL) {
+			LOGE("Error db null");
+			return -1;
+		}
+
+		return 0;
+	}
 
 	if (app_path == NULL)
 		return -1;
@@ -122,8 +143,13 @@ int rua_add_history(struct rua_rec *rec)
 	timestamp = PERF_MEASURE_START("RUA");
 
 	if (_db == NULL) {
-		LOGE("Error db null");
-		return -1;
+		_db = __db_init();
+		if (_db == NULL) {
+			LOGE("Error db null");
+			return -1;
+		}
+
+		return 0;
 	}
 
 	if (rec == NULL) {
@@ -318,37 +344,11 @@ out:
 
 int rua_init(void)
 {
-	unsigned int timestamp;
-	timestamp = PERF_MEASURE_START("RUA");
-
-	if (_db) {
-		return 0;
-	}
-
-	char defname[FILENAME_MAX];
-	const char *rua_db_path = tzplatform_getenv(TZ_USER_DB);
-	snprintf(defname, sizeof(defname), "%s/%s", rua_db_path, RUA_DB_NAME);
-	_db = __db_init(defname);
-
-	if (_db == NULL)
-		return -1;
-
-	PERF_MEASURE_END("RUA", timestamp);
-
 	return 0;
 }
 
 int rua_fini(void)
 {
-	unsigned int timestamp;
-	timestamp = PERF_MEASURE_START("RUA");
-
-	if (_db) {
-		db_util_close(_db);
-		_db = NULL;
-	}
-
-	PERF_MEASURE_END("RUA", timestamp);
 	return 0;
 }
 
@@ -381,12 +381,16 @@ static int __create_table(sqlite3 *db)
 	return 0;
 }
 
-static sqlite3 *__db_init(char *root)
+static sqlite3 *__db_init()
 {
 	int r;
 	sqlite3 *db = NULL;
 
-	r = db_util_open_with_options(root, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL);
+	char defname[FILENAME_MAX];
+	const char *rua_db_path = tzplatform_getenv(TZ_USER_DB);
+	snprintf(defname, sizeof(defname), "%s/%s", rua_db_path, RUA_DB_NAME);
+
+	r = db_util_open_with_options(defname, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL);
 	if (r) {
 		db_util_close(db);
 		return NULL;
