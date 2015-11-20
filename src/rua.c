@@ -122,8 +122,18 @@ int rua_add_history(struct rua_rec *rec)
 	timestamp = PERF_MEASURE_START("RUA");
 
 	if (_db == NULL) {
-		LOGE("Error db null");
-		return -1;
+
+		char defname[FILENAME_MAX];
+		const char *rua_db_path = tzplatform_getenv(TZ_USER_DB);
+		snprintf(defname, sizeof(defname), "%s/%s", rua_db_path, RUA_DB_NAME);
+		_db = __db_init(defname);
+
+		if (_db == NULL) {
+			LOGE("Error db null");
+			return -1;
+		}
+
+		return 0;
 	}
 
 	if (rec == NULL) {
@@ -318,37 +328,11 @@ out:
 
 int rua_init(void)
 {
-	unsigned int timestamp;
-	timestamp = PERF_MEASURE_START("RUA");
-
-	if (_db) {
-		return 0;
-	}
-
-	char defname[FILENAME_MAX];
-	const char *rua_db_path = tzplatform_getenv(TZ_USER_DB);
-	snprintf(defname, sizeof(defname), "%s/%s", rua_db_path, RUA_DB_NAME);
-	_db = __db_init(defname);
-
-	if (_db == NULL)
-		return -1;
-
-	PERF_MEASURE_END("RUA", timestamp);
-
 	return 0;
 }
 
 int rua_fini(void)
 {
-	unsigned int timestamp;
-	timestamp = PERF_MEASURE_START("RUA");
-
-	if (_db) {
-		db_util_close(_db);
-		_db = NULL;
-	}
-
-	PERF_MEASURE_END("RUA", timestamp);
 	return 0;
 }
 
