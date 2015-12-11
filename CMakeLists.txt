@@ -15,7 +15,7 @@ SET(SRCS
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)
 
 INCLUDE(FindPkgConfig)
-pkg_check_modules(pkgs REQUIRED sqlite3 db-util libtzplatform-config)
+pkg_check_modules(pkgs REQUIRED sqlite3 db-util libtzplatform-config bundle aul)
 
 FOREACH(flag ${pkgs_CFLAGS})
 	SET(EXTRA_CFLAGS "${EXTRA_CFLAGS} ${flag}")
