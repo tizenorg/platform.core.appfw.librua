@@ -31,6 +31,7 @@
 #define __RUA_H__
 
 #include <sqlite3.h>
+#include <bundle.h>
 #include <time.h>
 
 #ifndef API
@@ -66,6 +67,16 @@ struct rua_rec {
 	char *arg;		/**< application launching argument */
 	time_t launch_time;		/**< application launching time */
 };
+
+
+
+/**
+ * @brief	Delete history from DB
+ * @return 	0 on success, otherwise a nagative error value
+ * @retval	0 on successful
+ * @retval	-1 on failed
+ */
+API int rua_delete_history_from_db(bundle *b);
 
 /**
  * @brief	Clear history
