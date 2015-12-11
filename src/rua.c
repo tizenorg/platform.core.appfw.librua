@@ -27,8 +27,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
+#include <bundle.h>
 #include <db-util.h>
+#include <aul_svc.h>
 
 /* For multi-user support */
 #include <tzplatform_config.h>
@@ -58,70 +59,41 @@ static sqlite3 *__db_init();
 int rua_clear_history(void)
 {
 	int r;
-	char query[QUERY_MAXLEN];
-	sqlite3 *db = NULL;
-
-	db = __db_init();
-	if (db == NULL) {
-		LOGE("Error db null");
-		return -1;
-	}
-
-	snprintf(query, QUERY_MAXLEN, "delete from %s;", RUA_HISTORY);
-
-	r = __exec(db, query);
-	db_util_close(db);
+	r = aul_svc_delete_rua_history(NULL);
+	LOGI("rua_clear_history result : %d ", r);
 	return r;
 }
 
 int rua_delete_history_with_pkgname(char *pkg_name)
 {
 	int r;
-	char query[QUERY_MAXLEN];
-
-	sqlite3 *db = NULL;
-
-	db = __db_init();
-	if (db == NULL) {
-		LOGE("Error db null");
+	bundle *b = bundle_create();
+	if (b == NULL) {
+		LOGE("bundle_create fail out of memory.");
 		return -1;
 	}
 
-	if (pkg_name == NULL) {
-		db_util_close(db);
-		return -1;
-	}
-
-	snprintf(query, QUERY_MAXLEN, "delete from %s where pkg_name = '%s';",
-		RUA_HISTORY, pkg_name);
-
-	r = __exec(db, query);
-	db_util_close(db);
+	bundle_add_str(b, AUL_SVC_K_RUA_PKGNAME, pkg_name);
+	r = aul_svc_delete_rua_history(b);
+	LOGI("rua_delete_history_with_pkgname result : %d ", r);
+	bundle_free(b);
 	return r;
 }
 
 int rua_delete_history_with_apppath(char *app_path)
 {
 	int r;
-	char query[QUERY_MAXLEN];
-	sqlite3 *db = NULL;
-
-	db = __db_init();
-	if (db == NULL) {
-		LOGE("Error db null");
+	bundle *b = bundle_create();
+	if (b == NULL) {
+		LOGE("bundle_create fail out of memory.");
 		return -1;
 	}
 
-	if (app_path == NULL) {
-		db_util_close(db);
-		return -1;
-	}
+	bundle_add_str(b, AUL_SVC_K_RUA_APPPATH, app_path);
+	r = aul_svc_delete_rua_history(b);
+	LOGI("rua_delete_history_with_apppath result : %d ", r);
+	bundle_free(b);
 
-	snprintf(query, QUERY_MAXLEN, "delete from %s where app_path = '%s';",
-		RUA_HISTORY, app_path);
-
-	r = __exec(db, query);
-	db_util_close(db);
 	return r;
 }
 
