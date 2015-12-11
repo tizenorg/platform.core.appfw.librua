@@ -8,6 +8,8 @@ Source0:        librua-%{version}.tar.gz
 Source1001:     librua.manifest
 BuildRequires:  cmake
 BuildRequires:  sqlite3
+BuildRequires:  pkgconfig(bundle)
+BuildRequires:  pkgconfig(aul)
 BuildRequires:  pkgconfig(db-util)
 BuildRequires:  pkgconfig(sqlite3)
 BuildRequires:  pkgconfig(libtzplatform-config)
