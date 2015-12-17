@@ -53,6 +53,33 @@ static sqlite3 *_db = NULL;
 static int __exec(sqlite3 *db, char *query);
 static sqlite3 *__db_init(char *root, int flags);
 
+int __rua_stat_init(int flags)
+{
+	if (_db)
+		return 0;
+
+	char defname[FILENAME_MAX];
+	const char *rua_stat_db_path = tzplatform_getenv(TZ_USER_DB);
+	snprintf(defname, sizeof(defname), "%s/%s", rua_stat_db_path, RUA_STAT_DB_NAME);
+	_db = __db_init(defname, flags);
+
+	if (_db == NULL) {
+		LOGW("__rua_stat_init error");
+		return -1;
+	}
+
+	return 0;
+}
+
+int __rua_stat_fini(void)
+{
+	if (_db) {
+		db_util_close(_db);
+		_db = NULL;
+	}
+
+	return 0;
+}
 
 int __rua_stat_insert(char *caller, char *rua_stat_tag) {
 
@@ -291,37 +318,6 @@ out:
 	__rua_stat_fini();
 
 	return r;
-}
-
-int __rua_stat_init(int flags)
-{
-
-	if (_db) {
-		return 0;
-	}
-
-	char defname[FILENAME_MAX];
-	const char *rua_stat_db_path = tzplatform_getenv(TZ_USER_DB);
-	snprintf(defname, sizeof(defname), "%s/%s", rua_stat_db_path, RUA_STAT_DB_NAME);
-	_db = __db_init(defname, flags);
-
-	if (_db == NULL) {
-		LOGW("__rua_stat_init error");
-		return -1;
-	}
-
-	return 0;
-}
-
-int __rua_stat_fini(void)
-{
-
-	if (_db) {
-		db_util_close(_db);
-		_db = NULL;
-	}
-
-	return 0;
 }
 
 static int __exec(sqlite3 *db, char *query)
