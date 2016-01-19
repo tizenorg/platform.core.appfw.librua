@@ -1,7 +1,5 @@
 /*
- *  RUA
- *
- * Copyright (c) 2000 - 2015 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2000 - 2016 Samsung Electronics Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 /*
@@ -82,11 +79,12 @@ int __rua_stat_fini(void)
 	return 0;
 }
 
-int __rua_stat_insert(char *caller, char *rua_stat_tag) {
-
+int __rua_stat_insert(char *caller, char *rua_stat_tag)
+{
 	int r;
 	char query[QUERY_MAXLEN];
 	sqlite3_stmt *stmt = NULL;
+
 	sqlite3_snprintf(QUERY_MAXLEN, query,
 		"INSERT INTO rua_panel_stat (caller_panel, rua_stat_tag, score) VALUES (?,?,?)");
 
@@ -97,19 +95,19 @@ int __rua_stat_insert(char *caller, char *rua_stat_tag) {
 	}
 
 	r = sqlite3_bind_text(stmt, 1, caller, strlen(caller), SQLITE_STATIC);
-	if(r != SQLITE_OK) {
+	if (r != SQLITE_OK) {
 		LOGE("caller bind error(%d) \n", r);
 		goto out;
 	}
 
 	r = sqlite3_bind_text(stmt, 2, rua_stat_tag, strlen(rua_stat_tag), SQLITE_STATIC);
-	if(r != SQLITE_OK) {
+	if (r != SQLITE_OK) {
 		LOGE("rua_stat_tag bind error(%d) \n", r);
 		goto out;
 	}
 
 	r = sqlite3_bind_int(stmt, 3, WIN_SCORE);
-	if(r != SQLITE_OK) {
+	if (r != SQLITE_OK) {
 		LOGE("arg bind error(%d) \n", r);
 		goto out;
 	}
@@ -120,25 +118,24 @@ int __rua_stat_insert(char *caller, char *rua_stat_tag) {
 		goto out;
 	}
 
-
-out :
-	if(stmt)
+out:
+	if (stmt)
 		sqlite3_finalize(stmt);
 
 	return r;
 }
 
-int __rua_stat_lose_score_update(char *caller, char *rua_stat_tag) {
-
+int __rua_stat_lose_score_update(char *caller, char *rua_stat_tag)
+{
 	int r;
 	char query[QUERY_MAXLEN];
 	sqlite3_stmt *stmt = NULL;
+
 	sqlite3_snprintf(QUERY_MAXLEN, query,
 		"UPDATE rua_panel_stat SET score = score * %f WHERE caller_panel = ? AND rua_stat_tag != ?",
 		LOSE_SCORE_RATE);
 
 	LOGD("lose score update sql : %s", query);
-
 	r = sqlite3_prepare(_db, query, sizeof(query), &stmt, NULL);
 	if (r != SQLITE_OK) {
 		LOGE("sqlite3_prepare error(%d , %d, %s)", r, sqlite3_extended_errcode(_db), sqlite3_errmsg(_db));
@@ -146,13 +143,13 @@ int __rua_stat_lose_score_update(char *caller, char *rua_stat_tag) {
 	}
 
 	r = sqlite3_bind_text(stmt, 1, caller, strlen(caller), SQLITE_STATIC);
-	if(r != SQLITE_OK) {
+	if (r != SQLITE_OK) {
 		LOGE("caller bind error(%d) \n", r);
 		goto out;
 	}
 
 	r = sqlite3_bind_text(stmt, 2, rua_stat_tag, strlen(rua_stat_tag), SQLITE_STATIC);
-	if(r != SQLITE_OK) {
+	if (r != SQLITE_OK) {
 		LOGE("rua_stat_tag bind error(%d) \n", r);
 		goto out;
 	}
@@ -163,20 +160,19 @@ int __rua_stat_lose_score_update(char *caller, char *rua_stat_tag) {
 		goto out;
 	}
 
-
-out :
-	if(stmt)
+out:
+	if (stmt)
 		sqlite3_finalize(stmt);
 
 	return r;
-
 }
 
-int __rua_stat_win_score_update(char *caller, char *rua_stat_tag) {
-
+int __rua_stat_win_score_update(char *caller, char *rua_stat_tag)
+{
 	int r;
 	char query[QUERY_MAXLEN];
 	sqlite3_stmt *stmt = NULL;
+
 	sqlite3_snprintf(QUERY_MAXLEN, query,
 		"UPDATE rua_panel_stat SET score = score + %d WHERE caller_panel = ? AND rua_stat_tag = ?",
 		WIN_SCORE);
@@ -190,13 +186,13 @@ int __rua_stat_win_score_update(char *caller, char *rua_stat_tag) {
 	}
 
 	r = sqlite3_bind_text(stmt, 1, caller, strlen(caller), SQLITE_STATIC);
-	if(r != SQLITE_OK) {
+	if (r != SQLITE_OK) {
 		LOGE("caller bind error(%d) \n", r);
 		goto out;
 	}
 
 	r = sqlite3_bind_text(stmt, 2, rua_stat_tag, strlen(rua_stat_tag), SQLITE_STATIC);
-	if(r != SQLITE_OK) {
+	if (r != SQLITE_OK) {
 		LOGE("rua_stat_tag bind error(%d) \n", r);
 		goto out;
 	}
@@ -207,20 +203,17 @@ int __rua_stat_win_score_update(char *caller, char *rua_stat_tag) {
 		goto out;
 	}
 
-
-out :
-	if(stmt)
+out:
+	if (stmt)
 		sqlite3_finalize(stmt);
 
 	return r;
-
 }
 
 int rua_stat_update(char *caller, char *rua_stat_tag)
 {
 	int r;
 	int affected_rows = 0;
-	sqlite3_stmt *stmt = NULL;
 
 	LOGD("rua_stat_update start");
 
@@ -271,9 +264,10 @@ int rua_stat_update(char *caller, char *rua_stat_tag)
 }
 
 
-int rua_stat_get_stat_tags(char *caller, int (*rua_stat_tag_iter_fn)(const char *rua_stat_tag, void *data),
-		void *data) {
-
+int rua_stat_get_stat_tags(char *caller,
+		int (*rua_stat_tag_iter_fn)(const char *rua_stat_tag, void *data),
+		void *data)
+{
 	int r;
 	sqlite3_stmt *stmt;
 	char query[QUERY_MAXLEN];
@@ -303,13 +297,12 @@ int rua_stat_get_stat_tags(char *caller, int (*rua_stat_tag_iter_fn)(const char 
 		goto out;
 	}
 
-	while(sqlite3_step(stmt) == SQLITE_ROW) {
-
+	while (sqlite3_step(stmt) == SQLITE_ROW) {
 		ct = sqlite3_column_text(stmt, 0);
-		if (ct == NULL || ct[0] == '\0') {
+		if (ct == NULL || ct[0] == '\0')
 			LOGW("sqlite3_column_text null");
-		}
-		rua_stat_tag_iter_fn(ct, data);
+
+		rua_stat_tag_iter_fn((const char *)ct, data);
 	}
 
 out:

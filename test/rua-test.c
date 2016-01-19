@@ -1,9 +1,5 @@
 /*
- *  RUA
- *
- * Copyright (c) 2000 - 2012 Samsung Electronics Co., Ltd. All rights reserved.
- *
- * Contact: Jayoun Lee <airjany@samsung.com>
+ * Copyright (c) 2000 - 2016 Samsung Electronics Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 #include <stdio.h>
@@ -30,25 +25,25 @@
 
 #include "rua.h"
 
-int __add_history(char *pkgname)
+static int __add_history(char *pkgname)
 {
-	int ret = 0;
-	struct rua_rec rec;
-	const char *apppath = tzplatform_mkpath(TZ_SYS_RW_APP, pkgname);
+	int ret;
+	struct rua_rec *rec;
 
-	memset(&rec, 0, sizeof(rec));
-	rec.pkg_name = pkgname;
-	rec.app_path = apppath;
-
-	ret = rua_init();
-	if (ret) {
-		fprintf(stderr, "error rua_init()\n");
+	rec = (struct rua_rec *)calloc(1, sizeof(struct rua_rec));
+	if (rec == NULL) {
+		printf("Failed to allocate rua_rec\n");
 		return -1;
 	}
 
-	ret = rua_add_history(&rec);
+	rec->pkg_name = strdup(pkgname);
+	rec->app_path = strdup(tzplatform_mkpath(TZ_SYS_RW_APP, pkgname));
 
-	rua_fini();
+	ret = rua_add_history(rec);
+
+	free(rec->pkg_name);
+	free(rec->app_path);
+	free(rec);
 
 	return ret;
 }

@@ -1,9 +1,5 @@
 /*
- *  RUA
- *
- * Copyright (c) 2000 - 2012 Samsung Electronics Co., Ltd. All rights reserved.
- *
- * Contact: Jayoun Lee <airjany@samsung.com>
+ * Copyright (c) 2000 - 2016 Samsung Electronics Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,12 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
- */
-
-/*
- * @file    rua.c
- * @version 0.1
  */
 
 #include <stdio.h>
@@ -149,9 +139,6 @@ int rua_add_history(struct rua_rec *rec)
 	sqlite3_stmt *stmt;
 	sqlite3 *db = NULL;
 
-	unsigned int timestamp;
-	timestamp = PERF_MEASURE_START("RUA");
-
 	db = __db_init();
 	if (db == NULL) {
 		LOGE("Error db null");
@@ -189,13 +176,13 @@ int rua_add_history(struct rua_rec *rec)
 			RUA_HISTORY,
 			rec->pkg_name ? rec->pkg_name : "",
 			rec->app_path ? rec->app_path : "",
-			rec->arg ? rec->arg : "", time(NULL));
+			rec->arg ? rec->arg : "", (int)time(NULL));
 	else
 		/* update */
 		snprintf(query, QUERY_MAXLEN,
 			"update %s set arg='%s', launch_time='%d' where pkg_name = '%s';",
 			RUA_HISTORY,
-			rec->arg ? rec->arg : "", time(NULL), rec->pkg_name);
+			rec->arg ? rec->arg : "", (int)time(NULL), rec->pkg_name);
 
 	r = __exec(db, query);
 	if (r == -1) {
@@ -204,7 +191,6 @@ int rua_add_history(struct rua_rec *rec)
 		return -1;
 	}
 
-	PERF_MEASURE_END("RUA", timestamp);
 	db_util_close(db);
 	return r;
 }
@@ -279,29 +265,24 @@ int rua_history_get_rec(struct rua_rec *rec, char **table, int nrows, int ncols,
 	db_result = table + ((row + 1) * ncols);
 
 	tmp = db_result[RUA_COL_ID];
-	if (tmp) {
+	if (tmp)
 		rec->id = atoi(tmp);
-	}
 
 	tmp = db_result[RUA_COL_PKGNAME];
-	if (tmp) {
+	if (tmp)
 		rec->pkg_name = tmp;
-	}
 
 	tmp = db_result[RUA_COL_APPPATH];
-	if (tmp) {
+	if (tmp)
 		rec->app_path = tmp;
-	}
 
 	tmp = db_result[RUA_COL_ARG];
-	if (tmp) {
+	if (tmp)
 		rec->arg = tmp;
-	}
 
 	tmp = db_result[RUA_COL_LAUNCHTIME];
-	if (tmp) {
+	if (tmp)
 		rec->launch_time = atoi(tmp);
-	}
 
 	return 0;
 }
@@ -344,7 +325,7 @@ int rua_is_latest_app(const char *pkg_name)
 			goto out;
 		}
 
-		if (strncmp(pkg_name, ct, strlen(pkg_name)) == 0) {
+		if (strncmp(pkg_name, (const char *)ct, strlen(pkg_name)) == 0) {
 			r = 0;
 			goto out;
 		}

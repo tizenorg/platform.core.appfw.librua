@@ -1,7 +1,5 @@
 /*
- *  RUA STAT
- *
- * Copyright (c) 2000 - 2015 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2000 - 2016 Samsung Electronics Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +12,6 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- *
  */
 
 /**
@@ -61,4 +58,4 @@ API int rua_stat_get_stat_tags(char *caller,
 #ifdef __cplusplus
 }
 #endif
-#endif				/*__RUA_STAT_H__*/
+#endif /*__RUA_STAT_H__*/
