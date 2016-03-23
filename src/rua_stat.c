@@ -332,6 +332,25 @@ static int __exec(sqlite3 *db, char *query)
 	return 0;
 }
 
+static int _set_rua_db_journal_wal(sqlite3 *db) {
+
+	int r = __exec(db, "PRAGMA journal_mode = WAL");
+	if (r != SQLITE_OK) {
+		LOGE("failt to set wal %d", r);
+		return r;
+	}
+
+	r = __exec(db, "PRAGMA synchronous = OFF");
+	if (r != SQLITE_OK) {
+		LOGE("failt to set sync normal %d", r);
+		return r;
+	}
+
+	LOGD("__set_rua_db_journal_wal done");
+
+	return r;
+}
+
 static int __create_table(sqlite3 *db)
 {
 	int r;
@@ -349,8 +368,9 @@ static sqlite3 *__db_init(char *root, int flags)
 {
 	int r;
 	sqlite3 *db = NULL;
+	char *sql_err_msg = NULL;
 
-	r = db_util_open_with_options(root, &db, flags, NULL);
+	r = sqlite3_open_v2(root, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL);
 	if (r) {
 		LOGE("db util open error(%d/%d/%d/%s)", r,
 			sqlite3_errcode(db),
@@ -359,7 +379,14 @@ static sqlite3 *__db_init(char *root, int flags)
 		return NULL;
 
 	}
+
 	r = __create_table(db);
+	if (r) {
+		db_util_close(db);
+		return NULL;
+	}
+
+	r = _set_rua_db_journal_wal(db);
 	if (r) {
 		db_util_close(db);
 		return NULL;
