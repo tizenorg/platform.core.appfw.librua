@@ -350,24 +350,6 @@ int rua_fini(void)
 	return 0;
 }
 
-static int __exec(sqlite3 *db, char *query)
-{
-	int r;
-	char *errmsg = NULL;
-
-	if (db == NULL)
-		return -1;
-
-	r = sqlite3_exec(db, query, NULL, NULL, &errmsg);
-
-	if (r != SQLITE_OK) {
-		sqlite3_free(errmsg);
-		return -1;
-	}
-
-	return 0;
-}
-
 static int __create_table(sqlite3 *db)
 {
 	int r;
@@ -377,6 +359,43 @@ static int __create_table(sqlite3 *db)
 		return -1;
 
 	return 0;
+}
+
+static int __exec(sqlite3 *db, char *query)
+{
+	int r;
+	char *errmsg = NULL;
+	if (db == NULL)
+		return -1;
+
+	r = sqlite3_exec(db, query, NULL, NULL, &errmsg);
+
+	if (r != SQLITE_OK) {
+		LOGE("query error(%d)(%s)", r, errmsg);
+		sqlite3_free(errmsg);
+		return -1;
+	}
+
+	return 0;
+}
+
+int _set_rua_db_journal_wal(sqlite3 *db) {
+
+	int r = __exec(db, "PRAGMA journal_mode = WAL");
+	if (r != SQLITE_OK) {
+		LOGE("failt to set wal %d", r);
+		return r;
+	}
+
+	r = __exec(db, "PRAGMA synchronous = NORMAL");
+	if (r != SQLITE_OK) {
+		LOGE("failt to set sync normal %d", r);
+		return r;
+	}
+
+	LOGD("__set_rua_db_journal_wal done");
+
+	return r;
 }
 
 static sqlite3 *__db_init()
@@ -392,13 +411,19 @@ static sqlite3 *__db_init()
 	}
 	snprintf(defname, sizeof(defname), "%s/%s", rua_db_path, RUA_DB_NAME);
 
-	r = db_util_open_with_options(defname, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL);
+	r = sqlite3_open_v2(defname, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL);
 	if (r) {
 		db_util_close(db);
 		return NULL;
 	}
 
 	r = __create_table(db);
+	if (r) {
+		db_util_close(db);
+		return NULL;
+	}
+
+	r = _set_rua_db_journal_wal(db);
 	if (r) {
 		db_util_close(db);
 		return NULL;
