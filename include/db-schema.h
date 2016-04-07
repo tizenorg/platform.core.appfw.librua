@@ -18,7 +18,7 @@
 #define __RUA_SCHEMA_H__
 
 #define CREATE_RUA_HISTORY_TABLE " \
-PRAGMA journal_mode = PERSIST; \
+PRAGMA journal_mode = WAL; \
 \
 CREATE TABLE IF NOT EXISTS rua_history ( \
 	id INTEGER PRIMARY KEY, \
