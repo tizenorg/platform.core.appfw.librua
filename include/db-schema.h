@@ -18,7 +18,7 @@
 #define __RUA_SCHEMA_H__
 
 #define CREATE_RUA_HISTORY_TABLE " \
-PRAGMA journal_mode = PERSIST; \
+PRAGMA journal_mode = WAL; \
 \
 CREATE TABLE IF NOT EXISTS rua_history ( \
 	pkg_name TEXT, \
@@ -29,6 +29,8 @@ CREATE TABLE IF NOT EXISTS rua_history ( \
 );"
 
 #define CREATE_RUA_STAT_TABLE " \
+PRAGMA journal_mode = WAL; \
+\
 CREATE TABLE if not exists rua_panel_stat ( \
 	caller_panel TEXT NOT NULL, \
 	rua_stat_tag TEXT NOT NULL, \
