@@ -24,6 +24,7 @@
 #include <tzplatform_config.h>
 
 #include "rua.h"
+#include "rua_internal.h"
 
 static int __add_history(char *pkgname)
 {
@@ -34,7 +35,7 @@ static int __add_history(char *pkgname)
 	rec.pkg_name = pkgname;
 	rec.app_path = (char *)tzplatform_mkpath(TZ_SYS_RW_APP, pkgname);
 
-	ret = rua_add_history(&rec);
+	ret = rua_db_add_history(&rec);
 
 	return ret;
 }

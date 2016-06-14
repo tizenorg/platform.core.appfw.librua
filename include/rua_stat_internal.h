@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2000 - 2016 Samsung Electronics Co., Ltd. All rights reserved.
+ * Copyright (c) 2016 Samsung Electronics Co., Ltd. All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,18 @@
  */
 
 /**
- * @file 	rua_stat.h
- * @brief       RUA STATUS API declaration header file.
+ * @file 	rua_stat_internal.h
+ * @brief       RUA STATUS INTERNAL API declaration header file.
  * @author      Hyunho Kang (hhstark.kang@samsung.com)
  * @version     0.1
- * @history     0.1: RUA STAT API Declarations, structure declaration
+ * @history     0.1: RUA STAT INTERNAL API Declarations, structure declaration
  */
 
-#ifndef __RUA_STAT_H__
-#define __RUA_STAT_H__
+#ifndef __RUA_STAT_INTERNAL_H__
+#define __RUA_STAT_INTERNAL_H__
 
 #include <sqlite3.h>
+#include <dlog.h>
 
 #ifndef API
 #define API __attribute__ ((visibility("default")))
@@ -35,18 +36,30 @@
 extern "C" {
 #endif
 
+#ifdef LOG_TAG
+#undef LOG_TAG
+#endif
+
+#define LOG_TAG "RUA"
+
+#define RUA_STAT_DB_NAME	".rua_stat.db"
+#define QUERY_MAXLEN	4096
+#define WIN_SCORE 100
+#define LOSE_SCORE_RATE 0.7f
+
+int _rua_stat_init(sqlite3 *db, int flags);
+int _rua_stat_fini(sqlite3 *db);
 
 /**
- * @brief	Get rua status tag list
- * @param[in]	caller, callback, user data
+ * @brief	Add application launch status.
+ * @param[in]	caller, rua_stat_tag
  * @return	0 on success, otherwise a nagative error value
  * @retval	0 on successful
  * @retval	-1 on failed
  */
-API int rua_stat_get_stat_tags(char *caller,
-		int (*rua_stat_tag_iter_fn)(const char *rua_stat_tag, void *data), void *data);
+API int rua_stat_db_update(char *caller, char *rua_stat_tag);
 
 #ifdef __cplusplus
 }
 #endif
-#endif /*__RUA_STAT_H__*/
+#endif /*__RUA_STAT_INTERNAL_H__*/

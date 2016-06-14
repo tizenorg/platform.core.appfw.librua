@@ -7,9 +7,10 @@ SET(INCLUDEDIR "\${prefix}/include/${PROJECT_NAME}")
 SET(VERSION 0.1.0)
 
 SET(SRCS
-	src/perf-measure.c
 	src/rua.c
+	src/rua_internal.c
 	src/rua_stat.c
+	src/rua_stat_internal.c
 )
 
 INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/include)

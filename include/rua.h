@@ -52,34 +52,6 @@ extern "C" {
  */
 
 /**
- * @struct rua_rec
- * @brief RUA record info structure
- */
-struct rua_rec {
-	int id;		/**<  primary key */
-	char *pkg_name;		/**< package name */
-	char *app_path;		/**< application path */
-	char *arg;		/**< application launching argument */
-	time_t launch_time;		/**< application launching time */
-};
-
-/**
- * @brief	Delete history from DB
- * @return 	0 on success, otherwise a nagative error value
- * @retval	0 on successful
- * @retval	-1 on failed
- */
-API int rua_delete_history_from_db(bundle *b);
-
-/**
- * @brief	Clear history
- * @return 	0 on success, otherwise a nagative error value
- * @retval	0 on successful
- * @retval	-1 on failed
- */
-API int rua_clear_history(void);
-
-/**
  * @brief	Delete history with pkg_name
  * @param[in]	pkg_name package name to delete history
  * @return	0 on success, otherwise a nagative error value
@@ -98,13 +70,12 @@ API int rua_delete_history_with_pkgname(char *pkg_name);
 API int rua_delete_history_with_apppath(char *app_path);
 
 /**
- * @brief	Add application to recently used application list
- * @param[in]	rec  record to add history
- * @return	0 on success, otherwise a nagative error value
+ * @brief	Clear history
+ * @return 	0 on success, otherwise a nagative error value
  * @retval	0 on successful
  * @retval	-1 on failed
  */
-API int rua_add_history(struct rua_rec *rec);
+API int rua_clear_history(void);
 
 /**
  * @brief	Load recently used application history db.
