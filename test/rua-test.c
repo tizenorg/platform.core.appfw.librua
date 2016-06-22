@@ -19,6 +19,8 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 /* For multi-user support */
 #include <tzplatform_config.h>

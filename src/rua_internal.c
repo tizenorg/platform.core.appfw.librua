@@ -1,3 +1,18 @@
+/*
+ * Copyright (c) 2016 Samsung Electronics Co., Ltd. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #include <tzplatform_config.h>
 #include <db-util.h>
@@ -40,19 +55,9 @@ static sqlite3 *__db_init()
 	int r;
 	sqlite3 *db = NULL;
 
-	char defname[FILENAME_MAX];
-	const char *rua_db_path = tzplatform_getenv(TZ_USER_DB);
-	if (rua_db_path == NULL) {
-		LOGE("fail to get rua_db_path");
+	r = _rua_util_open_db(&db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, getuid(), RUA_DB_NAME);
+	if (r != SQLITE_OK)
 		return NULL;
-	}
-	snprintf(defname, sizeof(defname), "%s/%s", rua_db_path, RUA_DB_NAME);
-
-	r = db_util_open_with_options(defname, &db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, NULL);
-	if (r) {
-		db_util_close(db);
-		return NULL;
-	}
 
 	r = __create_table(db);
 	if (r) {
@@ -68,7 +73,6 @@ int rua_db_delete_history(bundle *b)
 	int r;
 	sqlite3 *db = NULL;
 	char query[QUERY_MAXLEN];
-
 	char *pkg_name = NULL;
 	char *app_path = NULL;
 	char *errmsg = NULL;
@@ -105,7 +109,6 @@ int rua_db_delete_history(bundle *b)
 		db_util_close(db);
 
 	return result;
-
 }
 
 int rua_db_add_history(struct rua_rec *rec)
@@ -129,38 +132,14 @@ int rua_db_add_history(struct rua_rec *rec)
 	}
 
 	snprintf(query, QUERY_MAXLEN,
-		"select count(*) from %s where pkg_name = '%s';", RUA_HISTORY,
-		rec->pkg_name);
+		"insert or replace into %s ( pkg_name, app_path, arg, launch_time) "
+		" values ( \"%s\", \"%s\", \"%s\", %d) ",
+		RUA_HISTORY,
+		rec->pkg_name ? rec->pkg_name : "",
+		rec->app_path ? rec->app_path : "",
+		rec->arg ? rec->arg : "", (int)time(NULL));
 
-	r = sqlite3_prepare(db, query, sizeof(query), &stmt, NULL);
-	if (r != SQLITE_OK) {
-		LOGE("Error sqlite3_prepare fail");
-		db_util_close(db);
-		return -1;
-	}
-
-	r = sqlite3_step(stmt);
-	if (r == SQLITE_ROW)
-		cnt = sqlite3_column_int(stmt, 0);
-
-	sqlite3_finalize(stmt);
-
-	if (cnt == 0)
-		/* insert */
-		snprintf(query, QUERY_MAXLEN,
-			"insert into %s ( pkg_name, app_path, arg, launch_time ) "
-			" values ( \"%s\", \"%s\", \"%s\", %d ) ",
-			RUA_HISTORY,
-			rec->pkg_name ? rec->pkg_name : "",
-			rec->app_path ? rec->app_path : "",
-			rec->arg ? rec->arg : "", (int)time(NULL));
-	else
-		/* update */
-		snprintf(query, QUERY_MAXLEN,
-			"update %s set arg='%s', launch_time='%d' where pkg_name = '%s';",
-			RUA_HISTORY,
-			rec->arg ? rec->arg : "", (int)time(NULL), rec->pkg_name);
-
+	LOGE("############ add history %s", query);
 	r = __exec(db, query);
 	if (r == -1) {
 		LOGE("[RUA ADD HISTORY ERROR] %s\n", query);
