@@ -22,21 +22,64 @@
 
 /* For multi-user support */
 #include <tzplatform_config.h>
+#include "rua_util.h"
 #include "rua_internal.h"
 #include "rua.h"
 #include "db-schema.h"
 
-int rua_delete_history_with_pkgname(char *pkg_name)
+int rua_add_history_for_uid(char *pkg_name, char *app_path, char *arg, uid_t uid)
 {
 	int r;
-	bundle *b = bundle_create();
+	char time_str[32] = {0,};
+	bundle *b = NULL;
+
+	if (pkg_name == NULL || app_path == NULL) {
+		LOGE("invalid param");
+		return -1;
+	}
+
+	r = _rua_util_check_uid(uid);
+	if (r == -1)
+		return r;
+
+	b = bundle_create();
 	if (b == NULL) {
 		LOGE("bundle_create fail out of memory.");
 		return -1;
 	}
-
+	snprintf(time_str, sizeof(time_str), "%d", (int)time(NULL));
 	bundle_add_str(b, AUL_K_RUA_PKGNAME, pkg_name);
-	r = aul_delete_rua_history(b);
+	bundle_add_str(b, AUL_K_RUA_APPPATH, app_path);
+	bundle_add_str(b, AUL_K_RUA_ARG, arg);
+	bundle_add_str(b, AUL_K_RUA_TIME, time_str);
+
+	r = aul_add_rua_history_for_uid(b, uid);
+	LOGI("rua_add_history_for_uid result : %d ", r);
+	bundle_free(b);
+	return r;
+}
+
+int rua_delete_history_with_pkgname(char *pkg_name)
+{
+	return rua_delete_history_with_pkgname_for_uid(pkg_name, getuid());
+}
+
+int rua_delete_history_with_pkgname_for_uid(char *pkg_name, uid_t uid)
+{
+	int r;
+	bundle *b;
+
+	r = _rua_util_check_uid(uid);
+	if (r == -1)
+		return r;
+
+	b = bundle_create();
+	if (b == NULL) {
+		LOGE("bundle_create fail out of memory.");
+		return -1;
+	}
+	bundle_add_str(b, AUL_K_RUA_PKGNAME, pkg_name);
+	r = aul_delete_rua_history_for_uid(b, uid);
 	LOGI("rua_delete_history_with_pkgname result : %d ", r);
 	bundle_free(b);
 	return r;
@@ -44,44 +87,60 @@ int rua_delete_history_with_pkgname(char *pkg_name)
 
 int rua_delete_history_with_apppath(char *app_path)
 {
+	return rua_delete_history_with_apppath_for_uid(app_path, getuid());
+}
+
+int rua_delete_history_with_apppath_for_uid(char *app_path, uid_t uid)
+{
 	int r;
-	bundle *b = bundle_create();
+	bundle *b;
+
+	r = _rua_util_check_uid(uid);
+	if (r == -1)
+		return r;
+
+	b = bundle_create();
 	if (b == NULL) {
 		LOGE("bundle_create fail out of memory.");
 		return -1;
 	}
-
 	bundle_add_str(b, AUL_K_RUA_APPPATH, app_path);
-	r = aul_delete_rua_history(b);
+	r = aul_delete_rua_history_for_uid(b, uid);
 	LOGI("rua_delete_history_with_apppath result : %d ", r);
 	bundle_free(b);
-
 	return r;
 }
 
 int rua_clear_history(void)
 {
+	return rua_clear_history_for_uid(getuid());
+}
+
+int rua_clear_history_for_uid(uid_t uid)
+{
 	int r;
-	r = aul_delete_rua_history(NULL);
+
+	r = _rua_util_check_uid(uid);
+	if (r == -1)
+		return r;
+
+	r = aul_delete_rua_history_for_uid(NULL, uid);
 	LOGI("rua_clear_history result : %d ", r);
 	return r;
 }
 
 int rua_history_load_db(char ***table, int *nrows, int *ncols)
 {
+	return rua_history_load_db_for_uid(table, nrows, ncols, getuid());
+}
+
+int rua_history_load_db_for_uid(char ***table, int *nrows, int *ncols, uid_t uid)
+{
 	int r;
 	char query[QUERY_MAXLEN];
 	char *db_err = NULL;
 	char **db_result = NULL;
 	sqlite3 *db = NULL;
-
-	char defname[FILENAME_MAX];
-	const char *rua_db_path = tzplatform_getenv(TZ_USER_DB);
-	if (rua_db_path == NULL) {
-		LOGE("fail to get rua_db_path");
-		return -1;
-	}
-	snprintf(defname, sizeof(defname), "%s/%s", rua_db_path, RUA_DB_NAME);
 
 	if (table == NULL)
 		return -1;
@@ -90,14 +149,16 @@ int rua_history_load_db(char ***table, int *nrows, int *ncols)
 	if (ncols == NULL)
 		return -1;
 
-	r = db_util_open_with_options(defname, &db, SQLITE_OPEN_READONLY, NULL);
-	if (r) {
-		db_util_close(db);
+	r = _rua_util_check_uid(uid);
+	if (r == -1)
+		return r;
+
+	r = _rua_util_open_db(&db, SQLITE_OPEN_READONLY, uid, RUA_DB_NAME);
+	if (r != SQLITE_OK)
 		return -1;
-	}
 
 	snprintf(query, QUERY_MAXLEN,
-		 "select * from %s order by launch_time desc;", RUA_HISTORY);
+		 "select pkg_name, app_path, arg, launch_time from %s order by launch_time desc;", RUA_HISTORY);
 
 	r = sqlite3_get_table(db, query, &db_result, nrows, ncols, &db_err);
 
@@ -136,14 +197,11 @@ int rua_history_get_rec(struct rua_rec *rec, char **table, int nrows, int ncols,
 
 	db_result = table + ((row + 1) * ncols);
 
-	tmp = db_result[RUA_COL_ID];
-	if (tmp)
-		rec->id = atoi(tmp);
-
 	tmp = db_result[RUA_COL_PKGNAME];
 	if (tmp)
 		rec->pkg_name = tmp;
 
+	LOGI("get rec pkg_name %s", rec->pkg_name);
 	tmp = db_result[RUA_COL_APPPATH];
 	if (tmp)
 		rec->app_path = tmp;
@@ -161,29 +219,29 @@ int rua_history_get_rec(struct rua_rec *rec, char **table, int nrows, int ncols,
 
 int rua_is_latest_app(const char *pkg_name)
 {
+	return rua_is_latest_app_for_uid(pkg_name, getuid());
+}
+
+int rua_is_latest_app_for_uid(const char *pkg_name, uid_t uid)
+{
 	int r = -1;
 	sqlite3_stmt *stmt;
 	const unsigned char *ct;
-	sqlite3 *db;
-
-	char defname[FILENAME_MAX];
-	const char *rua_db_path = tzplatform_getenv(TZ_USER_DB);
-	if (rua_db_path == NULL) {
-		LOGE("fail to get rua_db_path");
-		return -1;
-	}
-	snprintf(defname, sizeof(defname), "%s/%s", rua_db_path, RUA_DB_NAME);
+	sqlite3 *db = NULL;
+	char *query = "select pkg_name from rua_history order by launch_time desc limit 1;";
 
 	if (!pkg_name)
 		return -1;
 
-	r = db_util_open_with_options(defname, &db, SQLITE_OPEN_READONLY, NULL);
-	if (r) {
-		db_util_close(db);
-		return -1;
-	}
+	r = _rua_util_check_uid(uid);
+	if (r == -1)
+		return r;
 
-	r = sqlite3_prepare(db, Q_LATEST, sizeof(Q_LATEST), &stmt, NULL);
+	r = _rua_util_open_db(&db, SQLITE_OPEN_READONLY, uid, RUA_DB_NAME);
+	if (r != SQLITE_OK)
+		return -1;
+
+	r = sqlite3_prepare(db, query, sizeof(query), &stmt, NULL);
 	if (r != SQLITE_OK) {
 		db_util_close(db);
 		return -1;

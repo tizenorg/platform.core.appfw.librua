@@ -48,9 +48,7 @@ extern "C" {
 #define RUA_DB_NAME	".rua.db"
 #define RUA_HISTORY	"rua_history"
 #define QUERY_MAXLEN	4096
-#define Q_LATEST \
-	"select pkg_name from rua_history " \
-	"order by launch_time desc limit 1 "
+#define MAX_UID_STR_BUFSZ 20
 
 /**
  * @brief	Delete history from DB
@@ -72,4 +70,4 @@ API int rua_db_add_history(struct rua_rec *rec);
 #ifdef __cplusplus
 }
 #endif
-#endif				/*__RUA_INTERNAL_H__*/
+#endif		/*__RUA_INTERNAL_H__*/
