@@ -57,7 +57,7 @@ int _rua_stat_fini(sqlite3 *db);
  * @retval	0 on successful
  * @retval	-1 on failed
  */
-API int rua_stat_db_update(char *caller, char *rua_stat_tag);
+API int rua_stat_db_update(char *caller, char *rua_stat_tag, uid_t uid);
 
 #ifdef __cplusplus
 }

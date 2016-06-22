@@ -63,12 +63,11 @@ static sqlite3 *__db_init()
 	return db;
 }
 
-int rua_db_delete_history(bundle *b)
+int rua_db_delete_history(bundle *b, uid_t uid)
 {
 	int r;
 	sqlite3 *db = NULL;
 	char query[QUERY_MAXLEN];
-
 	char *pkg_name = NULL;
 	char *app_path = NULL;
 	char *errmsg = NULL;
@@ -86,11 +85,11 @@ int rua_db_delete_history(bundle *b)
 	}
 
 	if (pkg_name != NULL)
-		snprintf(query, QUERY_MAXLEN, "delete from rua_history where pkg_name = '%s';", pkg_name);
+		snprintf(query, QUERY_MAXLEN, "delete from rua_history where pkg_name = '%s' and uid = %d;", pkg_name, uid);
 	else if (app_path != NULL)
-		snprintf(query, QUERY_MAXLEN, "delete from rua_history where app_path = '%s';", app_path);
+		snprintf(query, QUERY_MAXLEN, "delete from rua_history where app_path = '%s' and uid = %d;", app_path, uid);
 	else
-		snprintf(query, QUERY_MAXLEN, "delete from rua_history;");
+		snprintf(query, QUERY_MAXLEN, "delete from rua_history where uid = %d;", uid);
 
 	LOGI("rua_delete_history_from_db : %s", query);
 	r = sqlite3_exec(db, query, NULL, NULL, &errmsg);
@@ -105,10 +104,9 @@ int rua_db_delete_history(bundle *b)
 		db_util_close(db);
 
 	return result;
-
 }
 
-int rua_db_add_history(struct rua_rec *rec)
+int rua_db_add_history(struct rua_rec *rec, uid_t uid)
 {
 	int r;
 	int cnt = 0;
@@ -129,8 +127,8 @@ int rua_db_add_history(struct rua_rec *rec)
 	}
 
 	snprintf(query, QUERY_MAXLEN,
-		"select count(*) from %s where pkg_name = '%s';", RUA_HISTORY,
-		rec->pkg_name);
+		"select count(*) from %s where pkg_name = '%s' and uid = %d;", RUA_HISTORY,
+		rec->pkg_name, uid);
 
 	r = sqlite3_prepare(db, query, sizeof(query), &stmt, NULL);
 	if (r != SQLITE_OK) {
@@ -148,18 +146,19 @@ int rua_db_add_history(struct rua_rec *rec)
 	if (cnt == 0)
 		/* insert */
 		snprintf(query, QUERY_MAXLEN,
-			"insert into %s ( pkg_name, app_path, arg, launch_time ) "
-			" values ( \"%s\", \"%s\", \"%s\", %d ) ",
+			"insert into %s ( pkg_name, app_path, arg, launch_time, uid) "
+			" values ( \"%s\", \"%s\", \"%s\", %d , %d) ",
 			RUA_HISTORY,
 			rec->pkg_name ? rec->pkg_name : "",
 			rec->app_path ? rec->app_path : "",
-			rec->arg ? rec->arg : "", (int)time(NULL));
+			rec->arg ? rec->arg : "", (int)time(NULL),
+			uid);
 	else
 		/* update */
 		snprintf(query, QUERY_MAXLEN,
-			"update %s set arg='%s', launch_time='%d' where pkg_name = '%s';",
+			"update %s set arg='%s', launch_time='%d' where pkg_name = '%s' and uid = %d;",
 			RUA_HISTORY,
-			rec->arg ? rec->arg : "", (int)time(NULL), rec->pkg_name);
+			rec->arg ? rec->arg : "", (int)time(NULL), rec->pkg_name, uid);
 
 	r = __exec(db, query);
 	if (r == -1) {

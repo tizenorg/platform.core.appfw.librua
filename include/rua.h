@@ -71,6 +71,7 @@ struct rua_rec {
  * @retval	-1 on failed
  */
 API int rua_delete_history_with_pkgname(char *pkg_name);
+API int rua_delete_history_with_pkgname_for_uid(char *pkg_name, uid_t uid);
 
 /**
  * @brief	Delete history with app_path
@@ -80,6 +81,7 @@ API int rua_delete_history_with_pkgname(char *pkg_name);
  * @retval	-1 on failed
  */
 API int rua_delete_history_with_apppath(char *app_path);
+API int rua_delete_history_with_apppath_for_uid(char *app_path, uid_t uid);
 
 /**
  * @brief	Clear history
@@ -88,6 +90,7 @@ API int rua_delete_history_with_apppath(char *app_path);
  * @retval	-1 on failed
  */
 API int rua_clear_history(void);
+API int rua_clear_history_for_uid(uid_t uid);
 
 /**
  * @brief	Load recently used application history db.
@@ -99,6 +102,7 @@ API int rua_clear_history(void);
  * @retval	-1 on failed
  */
 API int rua_history_load_db(char ***table, int *nrows, int *ncols);
+API int rua_history_load_db_for_uid(char ***table, int *nrows, int *ncols, uid_t uid);
 
 /**
  * @brief	Unload recently used application history db.
@@ -131,6 +135,7 @@ API int rua_history_get_rec(struct rua_rec *rec, char **table,
  * @retval	-1 if not lastest applicaton or on failed
  */
 API int rua_is_latest_app(const char *pkg_name);
+API int rua_is_latest_app_for_uid(const char *pkg_name, uid_t uid);
 
 /**
  * @brief	Initialize rua

@@ -9,14 +9,14 @@
 #include "db-schema.h"
 #include "rua_stat_internal.h"
 
-int __rua_stat_insert(sqlite3 *db, char *caller, char *rua_stat_tag)
+int __rua_stat_insert(sqlite3 *db, char *caller, char *rua_stat_tag, uid_t uid)
 {
 	int r;
 	char query[QUERY_MAXLEN];
 	sqlite3_stmt *stmt = NULL;
 
 	sqlite3_snprintf(QUERY_MAXLEN, query,
-		"INSERT INTO rua_panel_stat (caller_panel, rua_stat_tag, score) VALUES (?,?,?)");
+		"INSERT INTO rua_panel_stat (caller_panel, rua_stat_tag, score, uid) VALUES (?,?,?,?)");
 
 	r = sqlite3_prepare(db, query, sizeof(query), &stmt, NULL);
 	if (r != SQLITE_OK) {
@@ -42,6 +42,12 @@ int __rua_stat_insert(sqlite3 *db, char *caller, char *rua_stat_tag)
 		goto out;
 	}
 
+	r = sqlite3_bind_int(stmt, 4, uid);
+	if (r != SQLITE_OK) {
+		LOGE("arg bind error(%d) \n", r);
+		goto out;
+	}
+
 	r = sqlite3_step(stmt);
 	if (r != SQLITE_DONE) {
 		LOGE("step error(%d) \n", r);
@@ -55,14 +61,14 @@ out:
 	return r;
 }
 
-int __rua_stat_lose_score_update(sqlite3 *db, char *caller, char *rua_stat_tag)
+int __rua_stat_lose_score_update(sqlite3 *db, char *caller, char *rua_stat_tag, uid_t uid)
 {
 	int r;
 	char query[QUERY_MAXLEN];
 	sqlite3_stmt *stmt = NULL;
 
 	sqlite3_snprintf(QUERY_MAXLEN, query,
-		"UPDATE rua_panel_stat SET score = score * %f WHERE caller_panel = ? AND rua_stat_tag != ?",
+		"UPDATE rua_panel_stat SET score = score * %f WHERE caller_panel = ? AND rua_stat_tag != ? AND uid = ?",
 		LOSE_SCORE_RATE);
 
 	LOGD("lose score update sql : %s", query);
@@ -84,6 +90,12 @@ int __rua_stat_lose_score_update(sqlite3 *db, char *caller, char *rua_stat_tag)
 		goto out;
 	}
 
+	r = sqlite3_bind_int(stmt, 3, uid);
+	if (r != SQLITE_OK) {
+		LOGE("arg bind error(%d) \n", r);
+		goto out;
+	}
+
 	r = sqlite3_step(stmt);
 	if (r != SQLITE_DONE) {
 		LOGE("step error(%d) \n", r);
@@ -97,14 +109,14 @@ out:
 	return r;
 }
 
-int __rua_stat_win_score_update(sqlite3 *db, char *caller, char *rua_stat_tag)
+int __rua_stat_win_score_update(sqlite3 *db, char *caller, char *rua_stat_tag, uid_t uid)
 {
 	int r;
 	char query[QUERY_MAXLEN];
 	sqlite3_stmt *stmt = NULL;
 
 	sqlite3_snprintf(QUERY_MAXLEN, query,
-		"UPDATE rua_panel_stat SET score = score + %d WHERE caller_panel = ? AND rua_stat_tag = ?",
+		"UPDATE rua_panel_stat SET score = score + %d WHERE caller_panel = ? AND rua_stat_tag = ? AND uid = ?",
 		WIN_SCORE);
 
 	LOGD("win score update sql : %s", query);
@@ -124,6 +136,12 @@ int __rua_stat_win_score_update(sqlite3 *db, char *caller, char *rua_stat_tag)
 	r = sqlite3_bind_text(stmt, 2, rua_stat_tag, strlen(rua_stat_tag), SQLITE_STATIC);
 	if (r != SQLITE_OK) {
 		LOGE("rua_stat_tag bind error(%d) \n", r);
+		goto out;
+	}
+
+	r = sqlite3_bind_int(stmt, 3, uid);
+	if (r != SQLITE_OK) {
+		LOGE("arg bind error(%d) \n", r);
 		goto out;
 	}
 
@@ -218,7 +236,7 @@ int _rua_stat_fini(sqlite3 *db)
 	return 0;
 }
 
-int rua_stat_db_update(char *caller, char *rua_stat_tag)
+int rua_stat_db_update(char *caller, char *rua_stat_tag, uid_t uid)
 {
 	int r;
 	int affected_rows = 0;
@@ -248,16 +266,16 @@ int rua_stat_db_update(char *caller, char *rua_stat_tag)
 	}
 
 
-	r = __rua_stat_lose_score_update(db, caller, rua_stat_tag);
+	r = __rua_stat_lose_score_update(db, caller, rua_stat_tag, uid);
 	if (r != SQLITE_DONE) {
 		LOGE("__rua_stat_lose_score_insert fail.");
 		return -1;
 	}
 
-	r = __rua_stat_win_score_update(db, caller, rua_stat_tag);
+	r = __rua_stat_win_score_update(db, caller, rua_stat_tag, uid);
 	affected_rows = sqlite3_changes(db);
 	if ((r != SQLITE_DONE) || (affected_rows == 0)) {
-		r = __rua_stat_insert(db, caller, rua_stat_tag);
+		r = __rua_stat_insert(db, caller, rua_stat_tag, uid);
 
 		if (r != SQLITE_DONE) {
 			LOGE("__rua_stat_insert fail.");

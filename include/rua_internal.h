@@ -48,9 +48,8 @@ extern "C" {
 #define RUA_DB_NAME	".rua.db"
 #define RUA_HISTORY	"rua_history"
 #define QUERY_MAXLEN	4096
-#define Q_LATEST \
-	"select pkg_name from rua_history " \
-	"order by launch_time desc limit 1 "
+#define MAX_UID_STR_BUFSZ 20
+#define BASE_UID 5000
 
 /**
  * @brief	Delete history from DB
@@ -58,7 +57,7 @@ extern "C" {
  * @retval	0 on successful
  * @retval	-1 on failed
  */
-API int rua_db_delete_history(bundle *b);
+API int rua_db_delete_history(bundle *b, uid_t uid);
 
 /**
  * @brief	Add application to recently used application list
@@ -67,7 +66,7 @@ API int rua_db_delete_history(bundle *b);
  * @retval	0 on successful
  * @retval	-1 on failed
  */
-API int rua_db_add_history(struct rua_rec *rec);
+API int rua_db_add_history(struct rua_rec *rec, uid_t uid);
 
 #ifdef __cplusplus
 }

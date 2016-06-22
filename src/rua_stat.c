@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 #include <db-util.h>
 
@@ -32,6 +34,13 @@
 int rua_stat_get_stat_tags(char *caller,
 		int (*rua_stat_tag_iter_fn)(const char *rua_stat_tag, void *data),
 		void *data)
+{
+	return rua_stat_get_stat_tags_for_uid(caller, rua_stat_tag_iter_fn, data, getuid());
+}
+
+int rua_stat_get_stat_tags_for_uid(char *caller,
+		int (*rua_stat_tag_iter_fn)(const char *rua_stat_tag, void *data),
+		void *data, uid_t uid)
 {
 	int r;
 	sqlite3_stmt *stmt;
@@ -46,7 +55,7 @@ int rua_stat_get_stat_tags(char *caller,
 	}
 
 	sqlite3_snprintf(QUERY_MAXLEN, query,
-		"SELECT rua_stat_tag FROM rua_panel_stat WHERE caller_panel = ? ORDER BY score DESC");
+		"SELECT rua_stat_tag FROM rua_panel_stat WHERE caller_panel = ? AND uid = ? ORDER BY score DESC");
 
 	r = sqlite3_prepare(db, query, sizeof(query), &stmt, NULL);
 	if (r != SQLITE_OK) {
@@ -57,6 +66,12 @@ int rua_stat_get_stat_tags(char *caller,
 	r = sqlite3_bind_text(stmt, 1, caller, strlen(caller), SQLITE_STATIC);
 	if (r != SQLITE_OK) {
 		LOGE("caller bind error(%d) \n", r);
+		goto out;
+	}
+
+	r = sqlite3_bind_int(stmt, 2, uid);
+	if (r != SQLITE_OK) {
+		LOGE("arg bind error(%d) \n", r);
 		goto out;
 	}
 
