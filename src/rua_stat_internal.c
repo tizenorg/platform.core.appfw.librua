@@ -1,3 +1,20 @@
+/*
+ * Copyright (c) 2016 Samsung Electronics Co., Ltd. All rights reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+#include <unistd.h>
+#include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,6 +25,7 @@
 
 #include "db-schema.h"
 #include "rua_stat_internal.h"
+#include "rua_util.h"
 
 int __rua_stat_insert(sqlite3 *db, char *caller, char *rua_stat_tag)
 {
@@ -171,49 +189,19 @@ static int __create_table(sqlite3 *db)
 	return 0;
 }
 
-static sqlite3 *__db_init(sqlite3 *db, char *root, int flags)
+int _rua_stat_init(sqlite3 **db, char *db_name, int flags, uid_t uid)
 {
 	int r;
-
-	r = db_util_open_with_options(root, &db, flags, NULL);
+	r = _rua_util_open_db(db, flags, uid, db_name);
+	r = __create_table(*db);
 	if (r) {
-		LOGE("db util open error(%d/%d/%d/%s)", r,
-			sqlite3_errcode(db),
-			sqlite3_extended_errcode(db),
-			sqlite3_errmsg(db));
-		return NULL;
-
-	}
-	r = __create_table(db);
-	if (r) {
-		db_util_close(db);
-		return NULL;
-	}
-
-	return db;
-}
-
-int _rua_stat_init(sqlite3 *db, int flags)
-{
-	char defname[FILENAME_MAX];
-	const char *rua_stat_db_path = tzplatform_getenv(TZ_USER_DB);
-
-	snprintf(defname, sizeof(defname), "%s/%s", rua_stat_db_path, RUA_STAT_DB_NAME);
-	__db_init(db, defname, flags);
-
-	if (db == NULL) {
-		LOGW("__rua_stat_init error");
+		db_util_close(*db);
 		return -1;
 	}
 
-	return 0;
-}
-
-int _rua_stat_fini(sqlite3 *db)
-{
-	if (db) {
-		db_util_close(db);
-		db = NULL;
+	if (*db == NULL) {
+		LOGE("__rua_stat_init error");
+		return -1;
 	}
 	return 0;
 }
@@ -226,7 +214,7 @@ int rua_stat_db_update(char *caller, char *rua_stat_tag)
 
 	LOGD("rua_stat_update start");
 
-	r = _rua_stat_init(db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE);
+	r = _rua_stat_init(&db, RUA_STAT_DB_NAME, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE, getuid());
 	if (r == -1) {
 		LOGE("__rua_stat_init fail");
 		return -1;
@@ -247,7 +235,6 @@ int rua_stat_db_update(char *caller, char *rua_stat_tag)
 		return -1;
 	}
 
-
 	r = __rua_stat_lose_score_update(db, caller, rua_stat_tag);
 	if (r != SQLITE_DONE) {
 		LOGE("__rua_stat_lose_score_insert fail.");
@@ -264,10 +251,9 @@ int rua_stat_db_update(char *caller, char *rua_stat_tag)
 			return -1;
 		}
 	}
-
-	_rua_stat_fini(db);
+	if (db)
+		db_util_close(db);
 	LOGD("rua_stat_update done");
-
 	return r;
 }
 

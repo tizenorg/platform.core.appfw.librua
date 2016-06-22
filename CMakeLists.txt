@@ -7,6 +7,7 @@ SET(INCLUDEDIR "\${prefix}/include/${PROJECT_NAME}")
 SET(VERSION 0.1.0)
 
 SET(SRCS
+	src/rua_util.c
 	src/rua.c
 	src/rua_internal.c
 	src/rua_stat.c
@@ -44,6 +45,7 @@ INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/rua.h DESTINATION include/${PR
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/rua_internal.h DESTINATION include/${PROJECT_NAME})
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/rua_stat.h DESTINATION include/${PROJECT_NAME})
 INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/rua_stat_internal.h DESTINATION include/${PROJECT_NAME})
+INSTALL(FILES ${CMAKE_CURRENT_SOURCE_DIR}/include/rua_util.h DESTINATION include/${PROJECT_NAME})
 
 
 ADD_SUBDIRECTORY(test)

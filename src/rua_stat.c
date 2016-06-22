@@ -23,15 +23,52 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 #include <db-util.h>
+#include <aul.h>
 
 #include "rua_stat_internal.h"
 #include "rua_stat.h"
 
+int rua_stat_update_for_uid(char *caller, char *tag, uid_t uid)
+{
+	int r;
+	bundle *b = NULL;
+
+	r = _rua_util_check_uid(uid);
+	if (r == -1)
+		return r;
+
+	if (caller == NULL || tag == NULL) {
+		LOGE("invalid param");
+		return -1;
+	}
+
+	b = bundle_create();
+	if (b == NULL) {
+		LOGE("bundle_create fail out of memory.");
+		return -1;
+	}
+	bundle_add_str(b, AUL_SVC_K_RUA_STAT_CALLER, caller);
+	bundle_add_str(b, AUL_SVC_K_RUA_STAT_TAG, tag);
+	r = aul_update_rua_stat_for_uid(b, uid);
+	LOGI("rua_add_history_for_uid result : %d ", r);
+	bundle_free(b);
+	return r;
+}
+
 int rua_stat_get_stat_tags(char *caller,
 		int (*rua_stat_tag_iter_fn)(const char *rua_stat_tag, void *data),
 		void *data)
+{
+	return rua_stat_get_stat_tags_for_uid(caller, rua_stat_tag_iter_fn, data, getuid());
+}
+
+int rua_stat_get_stat_tags_for_uid(char *caller,
+		int (*rua_stat_tag_iter_fn)(const char *rua_stat_tag, void *data),
+		void *data, uid_t uid)
 {
 	int r;
 	sqlite3_stmt *stmt;
@@ -39,7 +76,11 @@ int rua_stat_get_stat_tags(char *caller,
 	const unsigned char *ct;
 	sqlite3 *db = NULL;
 
-	r = _rua_stat_init(db, SQLITE_OPEN_READONLY);
+	r = _rua_util_check_uid(uid);
+	if (r == -1)
+		return r;
+
+	r = _rua_stat_init(&db, RUA_STAT_DB_NAME, SQLITE_OPEN_READONLY, uid);
 	if (r == -1) {
 		LOGE("__rua_stat_init fail");
 		return -1;
@@ -72,7 +113,8 @@ out:
 	if (stmt)
 		sqlite3_finalize(stmt);
 
-	_rua_stat_fini(db);
+	if (db)
+		db_util_close(db);
 
 	return r;
 }
