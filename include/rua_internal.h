@@ -48,9 +48,8 @@ extern "C" {
 #define RUA_DB_NAME	".rua.db"
 #define RUA_HISTORY	"rua_history"
 #define QUERY_MAXLEN	4096
-#define Q_LATEST \
-	"select pkg_name from rua_history " \
-	"order by launch_time desc limit 1 "
+#define MAX_UID_STR_BUFSZ 20
+#define BASE_UID 5000
 
 /**
  * @brief	Delete history from DB

@@ -19,6 +19,8 @@
 #include <time.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 /* For multi-user support */
 #include <tzplatform_config.h>
@@ -30,13 +32,10 @@ static int __add_history(char *pkgname)
 {
 	int ret;
 	struct rua_rec rec;
+	char *app_path;
 
-	memset(&rec, 0, sizeof(rec));
-	rec.pkg_name = pkgname;
-	rec.app_path = (char *)tzplatform_mkpath(TZ_SYS_RW_APP, pkgname);
-
-	ret = rua_db_add_history(&rec);
-
+	app_path = (char *)tzplatform_mkpath(TZ_SYS_RW_APP, pkgname);
+	ret = rua_add_history_for_uid(pkgname, app_path, NULL, 5001);
 	return ret;
 }
 

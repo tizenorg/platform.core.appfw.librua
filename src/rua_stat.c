@@ -23,6 +23,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
 
 #include <db-util.h>
 
@@ -33,13 +35,20 @@ int rua_stat_get_stat_tags(char *caller,
 		int (*rua_stat_tag_iter_fn)(const char *rua_stat_tag, void *data),
 		void *data)
 {
+	return rua_stat_get_stat_tags_for_uid(caller, rua_stat_tag_iter_fn, data, getuid());
+}
+
+int rua_stat_get_stat_tags_for_uid(char *caller,
+		int (*rua_stat_tag_iter_fn)(const char *rua_stat_tag, void *data),
+		void *data, uid_t uid)
+{
 	int r;
 	sqlite3_stmt *stmt;
 	char query[QUERY_MAXLEN];
 	const unsigned char *ct;
 	sqlite3 *db = NULL;
 
-	r = _rua_stat_init(db, SQLITE_OPEN_READONLY);
+	r = _rua_stat_init(db, RUA_STAT_DB_NAME, SQLITE_OPEN_READONLY, uid);
 	if (r == -1) {
 		LOGE("__rua_stat_init fail");
 		return -1;
@@ -72,7 +81,8 @@ out:
 	if (stmt)
 		sqlite3_finalize(stmt);
 
-	_rua_stat_fini(db);
+	if (db)
+		db_util_close(db);
 
 	return r;
 }
