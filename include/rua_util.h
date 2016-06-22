@@ -15,16 +15,18 @@
  */
 
 /**
- * @file 	rua_stat_internal.h
- * @brief       RUA STATUS INTERNAL API declaration header file.
+ * @file        rua_util.h
+ * @brief       RUA UTIL API declaration header file.
  * @author      Hyunho Kang (hhstark.kang@samsung.com)
  * @version     0.1
- * @history     0.1: RUA STAT INTERNAL API Declarations, structure declaration
+ * @history     0.1: RUA UTIL API Declarations, structure declaration
  */
 
-#ifndef __RUA_STAT_INTERNAL_H__
-#define __RUA_STAT_INTERNAL_H__
+#ifndef __RUA_UTIL_H__
+#define __RUA_UTIL_H__
 
+#include <unistd.h>
+#include <stdlib.h>
 #include <sqlite3.h>
 #include <dlog.h>
 
@@ -42,23 +44,10 @@ extern "C" {
 
 #define LOG_TAG "RUA"
 
-#define RUA_STAT_DB_NAME	".rua_stat.db"
-#define QUERY_MAXLEN	4096
-#define WIN_SCORE 100
-#define LOSE_SCORE_RATE 0.7f
-
-int _rua_stat_init(sqlite3 **db, char *db_name, int flags, uid_t uid);
-
-/**
- * @brief	Add application launch status.
- * @param[in]	caller, rua_stat_tag
- * @return	0 on success, otherwise a nagative error value
- * @retval	0 on successful
- * @retval	-1 on failed
- */
-API int rua_stat_db_update(char *caller, char *rua_stat_tag);
+char *_rua_util_get_db_path(uid_t uid, char *db_name);
+int _rua_util_open_db(sqlite3 **db, int flags, uid_t uid, char *db_name);
 
 #ifdef __cplusplus
 }
 #endif
-#endif /*__RUA_STAT_INTERNAL_H__*/
+#endif				/*__RUA_UTIL_H__*/
