@@ -47,7 +47,7 @@ extern "C" {
 #define WIN_SCORE 100
 #define LOSE_SCORE_RATE 0.7f
 
-int _rua_stat_init(sqlite3 *db, int flags);
+int _rua_stat_init(sqlite3 **db, int flags);
 int _rua_stat_fini(sqlite3 *db);
 
 /**

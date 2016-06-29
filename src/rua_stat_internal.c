@@ -171,37 +171,30 @@ static int __create_table(sqlite3 *db)
 	return 0;
 }
 
-static sqlite3 *__db_init(sqlite3 *db, char *root, int flags)
-{
-	int r;
-
-	r = db_util_open_with_options(root, &db, flags, NULL);
-	if (r) {
-		LOGE("db util open error(%d/%d/%d/%s)", r,
-			sqlite3_errcode(db),
-			sqlite3_extended_errcode(db),
-			sqlite3_errmsg(db));
-		return NULL;
-
-	}
-	r = __create_table(db);
-	if (r) {
-		db_util_close(db);
-		return NULL;
-	}
-
-	return db;
-}
-
-int _rua_stat_init(sqlite3 *db, int flags)
+int _rua_stat_init(sqlite3 **db, int flags)
 {
 	char defname[FILENAME_MAX];
 	const char *rua_stat_db_path = tzplatform_getenv(TZ_USER_DB);
+	int r;
 
 	snprintf(defname, sizeof(defname), "%s/%s", rua_stat_db_path, RUA_STAT_DB_NAME);
-	__db_init(db, defname, flags);
+	r = db_util_open_with_options(defname, db, flags, NULL);
+	if (r) {
+		LOGE("db util open error(%d/%d/%d/%s)", r,
+			sqlite3_errcode(*db),
+			sqlite3_extended_errcode(*db),
+			sqlite3_errmsg(*db));
+		return NULL;
 
-	if (db == NULL) {
+	}
+
+	r = __create_table(*db);
+	if (r) {
+		db_util_close(*db);
+		return NULL;
+	}
+
+	if (*db == NULL) {
 		LOGW("__rua_stat_init error");
 		return -1;
 	}
@@ -226,7 +219,7 @@ int rua_stat_db_update(char *caller, char *rua_stat_tag)
 
 	LOGD("rua_stat_update start");
 
-	r = _rua_stat_init(db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE);
+	r = _rua_stat_init(&db, SQLITE_OPEN_CREATE | SQLITE_OPEN_READWRITE);
 	if (r == -1) {
 		LOGE("__rua_stat_init fail");
 		return -1;
