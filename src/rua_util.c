@@ -28,19 +28,27 @@
 #include "rua_util.h"
 
 #define DBPATH_LEN_MAX	4096
+#define ERR_BUF_MAX 1024
 
 char *_rua_util_get_db_path(uid_t uid, char *db_name)
 {
+	struct group grp;
 	struct group *grpinfo = NULL;
-	char db_path[DBPATH_LEN_MAX] = {0, };
-	struct passwd *userinfo = getpwuid(uid);
-	if (userinfo == NULL) {
+	char db_path[DBPATH_LEN_MAX];
+	struct passwd pwd;
+	struct passwd *userinfo = NULL;
+	char buf[ERR_BUF_MAX];
+	int ret;
+
+	ret = getpwuid_r(uid, &pwd, buf, sizeof(buf), &userinfo);
+	if (ret != 0 || userinfo == NULL) {
 		LOGE("getpwuid(%d) returns NULL !", uid);
 		return NULL;
 	}
-	grpinfo = getgrnam("users");
-	if (grpinfo == NULL) {
-		LOGE("getgrnam(users) returns NULL !");
+
+	ret = getgrnam_r("users", &grp, buf, sizeof(buf), &grpinfo);
+	if (ret != 0 || grpinfo == NULL) {
+		LOGE("getgrnam_r(users) returns NULL !");
 		return NULL;
 	}
 
@@ -48,23 +56,29 @@ char *_rua_util_get_db_path(uid_t uid, char *db_name)
 		LOGE("UID [%d] does not belong to 'users' group!", uid);
 		return NULL;
 	}
-	snprintf(db_path, sizeof(db_path), "%s/.applications/dbspace/%s", userinfo->pw_dir, db_name);
+	snprintf(db_path, sizeof(db_path), "%s/.applications/dbspace/%s",
+			userinfo->pw_dir, db_name);
 	LOGD("db path %s", db_path);
-	return db_path;
+
+	return strdup(db_path);
 }
 
 int _rua_util_open_db(sqlite3 **db, int flags, uid_t uid, char *db_name)
 {
 	int r;
 	char *db_path = _rua_util_get_db_path(uid, db_name);
+
 	r = db_util_open_with_options(db_path, db, flags, NULL);
 	if (r) {
 		LOGE("db util open error(%d/%d/%d/%s)", r,
 			sqlite3_errcode(*db),
 			sqlite3_extended_errcode(*db),
 			sqlite3_errmsg(*db));
+		free(db_path);
 		return -1;
 	}
+
+	free(db_path);
 	return r;
 }
 
