@@ -87,6 +87,8 @@ static int __update_stat()
 static int __rua_stat_tag_iter_cb(const char *rua_stat_tag, void *data)
 {
 	printf("rua_stat_tag : %s \n", rua_stat_tag);
+
+	return 0;
 }
 
 static int __get_stat_tags()
