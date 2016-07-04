@@ -28,43 +28,44 @@
 #include "rua_util.h"
 
 #define DBPATH_LEN_MAX	4096
+#define ERR_BUF_MAX 1024
 
 char *_rua_util_get_db_path(uid_t uid, char *db_name)
 {
-	struct group *grpinfo = NULL;
-	char db_path[DBPATH_LEN_MAX] = {0, };
-	struct passwd *userinfo = getpwuid(uid);
-	if (userinfo == NULL) {
-		LOGE("getpwuid(%d) returns NULL !", uid);
-		return NULL;
-	}
-	grpinfo = getgrnam("users");
-	if (grpinfo == NULL) {
-		LOGE("getgrnam(users) returns NULL !");
-		return NULL;
-	}
+	char db_path[DBPATH_LEN_MAX];
+	char *db_path_prefix;
+	int ret;
 
-	if (grpinfo->gr_gid != userinfo->pw_gid) {
-		LOGE("UID [%d] does not belong to 'users' group!", uid);
-		return NULL;
-	}
-	snprintf(db_path, sizeof(db_path), "%s/.applications/dbspace/%s", userinfo->pw_dir, db_name);
+	tzplatform_set_user(uid);
+	db_path_prefix = tzplatform_getenv(TZ_USER_DB);
+	tzplatform_reset_user();
+
+	snprintf(db_path, sizeof(db_path), "%s/%s", db_path_prefix, db_name);
 	LOGD("db path %s", db_path);
-	return db_path;
+
+	return strdup(db_path);
 }
 
 int _rua_util_open_db(sqlite3 **db, int flags, uid_t uid, char *db_name)
 {
 	int r;
 	char *db_path = _rua_util_get_db_path(uid, db_name);
+	if (db_path == NULL) {
+		LOGE("out of memory _rua_util_get_db_path fail");
+		return -1;
+	}
+
 	r = db_util_open_with_options(db_path, db, flags, NULL);
 	if (r) {
 		LOGE("db util open error(%d/%d/%d/%s)", r,
 			sqlite3_errcode(*db),
 			sqlite3_extended_errcode(*db),
 			sqlite3_errmsg(*db));
+		free(db_path);
 		return -1;
 	}
+
+	free(db_path);
 	return r;
 }
 

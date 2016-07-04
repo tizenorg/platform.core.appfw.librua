@@ -31,6 +31,7 @@
 
 #include "rua_stat_internal.h"
 #include "rua_stat.h"
+#include "rua_util.h"
 
 int rua_stat_update_for_uid(char *caller, char *tag, uid_t uid)
 {
