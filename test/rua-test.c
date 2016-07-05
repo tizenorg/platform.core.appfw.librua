@@ -45,7 +45,6 @@ static int __add_history()
 static int __delete_history_with_pkgname()
 {
 	int ret;
-	char *app_path;
 	char *pkgname = "org.tizen.ruatester";
 
 	ret = rua_delete_history_with_pkgname_for_uid(pkgname, 5001);
@@ -67,7 +66,7 @@ static int __load_rua_history()
 	int row;
 	for (row = 0; row < rows; ++row) {
 		rua_history_get_rec(&record, table, rows, cols, row);
-		printf("pkgname : %s, time : %d \n", record.pkg_name, record.launch_time);
+		printf("pkgname : %s, time : %d \n", record.pkg_name, (int)record.launch_time);
 	}
 
 	rua_history_unload_db(&table);
@@ -77,8 +76,6 @@ static int __load_rua_history()
 static int __update_stat()
 {
 	int ret;
-	char *app_path;
-	char *pkgname = "org.tizen.ruatester";
 
 	ret = rua_stat_update_for_uid("ruacaller", "org.tizen.ruatester", 5001);
 	return ret;
@@ -152,7 +149,12 @@ int main()
 		printf(" 4.  Update RUA stat\n");
 		printf(" 5.  Get RUA stat tags\n");
 		printf("------------------------------------------\n");
-		scanf("%d", &test_num);
+		ret = scanf("%d", &test_num);
+		if (ret < 0) {
+			printf("scanf fail %d", ret);
+			break;
+		}
+
 		run_next = run_test(test_num);
 	}
 	return ret;

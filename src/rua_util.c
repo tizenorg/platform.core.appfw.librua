@@ -33,8 +33,7 @@
 char *_rua_util_get_db_path(uid_t uid, char *db_name)
 {
 	char db_path[DBPATH_LEN_MAX];
-	char *db_path_prefix;
-	int ret;
+	const char *db_path_prefix;
 
 	tzplatform_set_user(uid);
 	db_path_prefix = tzplatform_getenv(TZ_USER_DB);
