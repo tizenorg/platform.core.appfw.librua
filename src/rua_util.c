@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <linux/limits.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
@@ -27,12 +28,9 @@
 
 #include "rua_util.h"
 
-#define DBPATH_LEN_MAX	4096
-#define ERR_BUF_MAX 1024
-
 char *_rua_util_get_db_path(uid_t uid, char *db_name)
 {
-	char db_path[DBPATH_LEN_MAX];
+	char db_path[PATH_MAX];
 	const char *db_path_prefix;
 
 	tzplatform_set_user(uid);
